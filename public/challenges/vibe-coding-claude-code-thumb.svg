@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="">
+  <defs>
+    <linearGradient id="vc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="10" fill="url(#vc)"/>
+  <rect x="18" y="14" width="28" height="22" rx="4" fill="white" opacity="0.95"/>
+  <text x="32" y="29" text-anchor="middle" fill="#5b21b6" font-family="system-ui,sans-serif" font-size="9" font-weight="800">AI</text>
+  <text x="32" y="48" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="7" font-weight="700" letter-spacing="0.04em">CODE</text>
+</svg>

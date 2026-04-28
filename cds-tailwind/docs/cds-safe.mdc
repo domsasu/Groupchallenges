@@ -1,0 +1,99 @@
+---
+description: CDS (Coursera Design System) styling rules — safe mode (CSS variables)
+globs: ["**/*.tsx", "**/*.ts", "**/*.css"]
+alwaysApply: true
+---
+
+# CDS Prototype — Cursor Rules (Safe Mode)
+
+This project uses CDS tokens via `cds-standalone.css`. Tokens are CSS custom properties — use them with Tailwind's arbitrary value syntax.
+
+## Golden Rule
+
+**Always use CDS CSS variables with arbitrary value syntax. Never use hardcoded hex values or default Tailwind color/radius names.**
+
+- `bg-[var(--cds-color-blue-700)]` — correct (CDS blue)
+- `bg-blue-700` — wrong (Tailwind's default blue, not CDS)
+- `bg-[#0056d2]` — wrong (hardcoded hex)
+
+## Icons
+
+Use **Material Symbols Rounded** (weight 400, no fill) — never draw custom SVG icons. Usage: `<span class="material-symbols-rounded">icon_name</span>`. Sizes: 16px (small), 20px (default), 24px (large), 36px (xlarge). See `cds-styling-spec.md` for colors and spacing.
+
+## Component Styling Reference
+
+**Before styling any component, read `cds-styling-spec.md` in the project root.** It contains exact sizing, padding, border-radius, colors, and state styles for every CDS component (buttons, inputs, dialogs, tabs, cards, chips, etc.) extracted from the actual CDS codebase.
+
+## Typography
+
+Use CDS composite classes for all text. These set font-family, font-size, font-weight, and line-height together. **Never add extra `font-bold` or `font-semibold`** — all weight comes from the CDS class. **Never use `uppercase`** — CDS does not use all-caps.
+
+`cds-display` (64px), `cds-title-lg` (48px), `cds-title-md` (36px), `cds-title-sm` (30px), `cds-title-xs` (24px), `cds-subtitle-lg` (20px), `cds-subtitle-md` (16px), `cds-subtitle-sm` (14px), `cds-body-primary` (16px), `cds-body-secondary` (14px), `cds-body-tertiary` (12px), `cds-action-primary` (16px/600), `cds-action-secondary` (14px/600)
+
+## Colors
+
+Use `var(--cds-color-{scale}-{weight})` with Tailwind arbitrary values. Scales: `grey`, `blue`, `purple`, `green`, `red`, `yellow`, `pink`, `aqua` — weights 25 to 975.
+
+| Role | Class |
+|------|-------|
+| Primary action | `bg-[var(--cds-color-blue-700)]` |
+| Primary hover | `bg-[var(--cds-color-blue-800)]` |
+| Active/pressed | `bg-[var(--cds-color-purple-950)]` |
+| Body text | `text-[var(--cds-color-grey-975)]` |
+| Secondary text | `text-[var(--cds-color-grey-600)]` |
+| Disabled bg | `bg-[var(--cds-color-grey-50)]` / `bg-[var(--cds-color-grey-200)]` |
+| Border (default) | `border-[var(--cds-color-grey-400)]` |
+| Border (subtle) | `border-[var(--cds-color-grey-100)]` |
+| Page background | `bg-[var(--cds-color-grey-25)]` |
+| Surface | `bg-[var(--cds-color-white)]` |
+| Error | `text-[var(--cds-color-red-700)]` |
+| Success | `text-[var(--cds-color-green-700)]` |
+| Warning | `text-[var(--cds-color-yellow-700)]` |
+
+## Border Radius
+
+| Use for | Class |
+|---------|-------|
+| Tabs, links | `rounded-[var(--cds-border-radius-50)]` (4px) |
+| Buttons, inputs | `rounded-[var(--cds-border-radius-100)]` (8px) |
+| Dialogs, cards | `rounded-[var(--cds-border-radius-200)]` (16px) |
+| Chips | `rounded-[var(--cds-border-radius-400)]` (32px) |
+| Tags, avatars | `rounded-full` |
+
+## Shadows
+
+`shadow-[var(--cds-elevation-level1)]` (cards), `shadow-[var(--cds-elevation-level2)]` (dropdowns), `shadow-[var(--cds-elevation-level3)]` (modals)
+
+## Form Elements
+
+### Text Field
+
+| Part | Styling |
+|------|---------|
+| Label | `cds-body-primary text-[var(--cds-color-grey-975)]` above input, `mb-2` spacing |
+| Input | `p-3 border border-[var(--cds-color-grey-400)] rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-white)] cds-body-primary text-[var(--cds-color-grey-975)]` |
+| Placeholder | `placeholder:text-[var(--cds-color-grey-600)]` |
+| Support text | `cds-body-secondary text-[var(--cds-color-grey-600)] mt-1` |
+| Hover | `hover:bg-[var(--cds-color-blue-25)] hover:border-[var(--cds-color-blue-800)]` |
+| Focus | `cds-focus-ring` class |
+| Error | `border-[var(--cds-color-red-700)]` + error message in `text-[var(--cds-color-red-700)] cds-body-secondary` |
+| Disabled | `border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-50)]` |
+
+### Select / Dropdown
+
+Trigger uses same styling as text field. Dropdown menu: `bg-[var(--cds-color-white)] rounded-[var(--cds-border-radius-200)] shadow-[var(--cds-elevation-level2)]`, option items `cds-body-primary`, hover `bg-[var(--cds-color-blue-25)] text-[var(--cds-color-blue-800)]`.
+
+## Dialog / Modal
+
+| Property | Value |
+|----------|-------|
+| Overlay | `bg-[var(--cds-color-utility-overlay)]` (full-screen fixed backdrop) |
+| Background | `bg-[var(--cds-color-white)]` |
+| Border-radius | `rounded-[var(--cds-border-radius-200)]` (0 on mobile) |
+| Shadow | `shadow-[var(--cds-elevation-level3)]` |
+| Position | `fixed inset-0` centered |
+| Overflow | `overflow-y-auto` |
+
+Sizes: small `w-[340px]`, medium `w-[568px]`, large `w-[60vw]`. Min-height 300px, max-height 80vh.
+
+Padding: header 24px (16px on small), content sides 24px, actions 24px. Title uses `cds-title-xs`, close button top-right.

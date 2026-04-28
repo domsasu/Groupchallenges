@@ -1,0 +1,125 @@
+# CDS Prototype — AI Instructions
+
+This is a Coursera Design System (CDS) prototype built with Vite + React + TypeScript + Tailwind CSS v4.
+
+## Golden Rule
+
+**Always use CDS token classes. Never use arbitrary Tailwind values for colors, spacing, typography, or border-radius.**
+
+Arbitrary values are acceptable for layout dimensions (container widths, dialog sizes, max-heights) where no CDS token applies.
+
+- `bg-blue-700` — correct (CDS blue)
+- `bg-[#0056d2]` — wrong (arbitrary hex)
+- `p-16` — correct (16px from CDS spacing)
+- `p-[18px]` — wrong (not on the CDS grid)
+- `max-w-[720px]` — acceptable (layout dimension, no token exists)
+
+## Icons
+
+Use **Material Symbols Rounded** (weight 400, no fill) — never draw custom SVG icons. Usage: `<span class="material-symbols-rounded">icon_name</span>`. Sizes: 16px (small), 20px (default), 24px (large), 36px (xlarge). See `cds-styling-spec.md` for colors and spacing.
+
+## Component Styling Reference
+
+**Before styling any component, read `cds-styling-spec.md` in the project root.** It contains exact sizing, padding, border-radius, colors, and state styles for every CDS component (buttons, inputs, dialogs, tabs, cards, chips, etc.) extracted from the actual CDS codebase.
+
+## Tech Stack
+
+- **Vite** + **React** + **TypeScript**
+- **Tailwind CSS v4** (CSS-based config via `@theme`)
+- **@coursera/cds-tailwind** — CDS tokens for Tailwind
+- **Source Sans 3** — Coursera's brand font (loaded via Google Fonts)
+
+## Colors
+
+Use `{property}-{scale}-{weight}` syntax. Scales: `grey`, `blue`, `purple`, `green`, `red`, `yellow`, `pink`, `aqua` — weights 25 to 975. Plus: `white`, `black`, `transparent`.
+
+| Role | Class |
+|------|-------|
+| Primary action | `bg-blue-700` |
+| Primary hover | `bg-blue-800` |
+| Active/pressed | `bg-purple-950` |
+| Body text | `text-grey-975` |
+| Secondary text | `text-grey-600` |
+| Disabled bg | `bg-grey-50` / `bg-grey-200` |
+| Border (default) | `border-grey-400` |
+| Border (subtle) | `border-grey-100` |
+| Page background | `bg-grey-25` |
+| Surface | `bg-white` |
+| Error | `text-red-700` |
+| Success | `text-green-700` |
+| Warning | `text-yellow-700` |
+| Dialog overlay | `bg-darken-500` |
+
+Additional scales: `darken` (black overlays, rgba) and `lighten` (white overlays, rgba) — weights 25 to 975. Use `bg-darken-500` for modal/dialog backdrops.
+
+## Spacing
+
+**Numbers equal pixels** (`--spacing: 1px`). CDS grid: **2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 112**.
+
+## Typography
+
+Composite classes (bundle size + weight + line-height):
+
+`cds-display` (64px), `cds-title-lg` (48px), `cds-title-md` (36px), `cds-title-sm` (30px), `cds-title-xs` (24px), `cds-subtitle-lg` (20px), `cds-subtitle-md` (16px), `cds-subtitle-sm` (14px), `cds-body-primary` (16px), `cds-body-secondary` (14px), `cds-body-tertiary` (12px), `cds-action-primary` (16px/600), `cds-action-secondary` (14px/600)
+
+**All font weight comes from the CDS class — never add extra `font-bold` or `font-semibold`.** Never use `uppercase` — CDS does not use all-caps.
+
+## Border Radius
+
+`rounded-4` (4px), `rounded-8` (8px), `rounded-16` (16px), `rounded-32` (32px), `rounded-full` (pill)
+
+Key: buttons/inputs = `rounded-8`, dialogs/cards = `rounded-16`, chips = `rounded-32`, tags/avatars = `rounded-full`
+
+## Shadows
+
+`shadow-elevation-1` (cards), `shadow-elevation-2` (dropdowns), `shadow-elevation-3` (modals)
+
+## Form Elements
+
+### Text Field
+
+| Part | Styling |
+|------|---------|
+| Label | `cds-body-primary text-grey-975` above input, `mb-8` spacing |
+| Input | `p-12 border border-grey-400 rounded-8 bg-white cds-body-primary text-grey-975` |
+| Placeholder | `placeholder:text-grey-600` |
+| Support text | `cds-body-secondary text-grey-600 mt-4` |
+| Hover | `hover:bg-blue-25 hover:border-blue-800` |
+| Focus | `cds-focus-ring` class, or `focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-2` |
+| Error | `border-red-700` + error message in `text-red-700 cds-body-secondary` |
+| Disabled | `border-grey-200 bg-grey-50 text-grey-200` |
+
+### Select / Dropdown
+
+Trigger uses same styling as text field. Dropdown menu: `bg-white rounded-16 shadow-elevation-2`, option items `p-8 rounded-8 cds-body-primary`, hover `bg-blue-25 text-blue-800`.
+
+## Dialog / Modal
+
+| Property | Value |
+|----------|-------|
+| Overlay | `bg-darken-500` (full-screen fixed backdrop) |
+| Background | `bg-white` |
+| Border-radius | `rounded-16` (0 on mobile) |
+| Shadow | `shadow-elevation-3` |
+| Position | `fixed inset-0` centered, `z-modal` |
+| Overflow | `overflow-y-auto` |
+
+Sizes: small `w-[340px]`, medium `w-[568px]`, large `w-[60vw]`. Min-height 300px, max-height 80vh.
+
+Padding: header `p-24` (16px on small), content sides `px-24`, actions `p-24`. Title uses `cds-title-xs`, close button top-right.
+
+## Breakpoints
+
+`sm:` (600px), `md:` (1024px), `lg:` (1440px), `xl:` (1920px)
+
+## Transitions
+
+Easing: `ease-entrance`, `ease-exit`, `ease-standard`. Duration: `duration-fast` (150ms), `duration-normal` (225ms), `duration-slow` (500ms)
+
+## Adding CDS to an Existing Project
+
+There are two setup modes:
+
+- **Safe mode (recommended):** Follow `cds-tailwind/SETUP-EXISTING.md`. Adds CDS tokens + typography as CSS variables and classes. Does NOT change existing Tailwind spacing or colors. Use this for projects that already have styling.
+
+- **Full replace mode:** Follow `cds-tailwind/SETUP.md`. Replaces the entire Tailwind setup with CDS (resets defaults, `p-8` = 8px). Only use for clean CDS-only projects.

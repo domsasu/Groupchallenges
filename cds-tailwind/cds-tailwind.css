@@ -1,0 +1,453 @@
+/* ==========================================================================
+   CDS Tailwind Theme — Maps CDS tokens to Tailwind CSS v4 utilities
+
+   Usage: bg-blue-700, text-grey-975, p-8, rounded-8, shadow-elevation-1, etc.
+   Spacing is 1:1 with pixels: p-8 = 8px, gap-24 = 24px, m-16 = 16px
+   ========================================================================== */
+
+@theme {
+  /* Reset Tailwind defaults so only CDS values are available */
+  --color-*: initial;
+  --shadow-*: initial;
+  --radius-*: initial;
+  --font-size-*: initial;
+  --font-weight-*: initial;
+  --font-family-*: initial;
+  --letter-spacing-*: initial;
+  --leading-*: initial;
+  --ease-*: initial;
+  --breakpoint-*: initial;
+  --animate-*: initial;
+
+  /* ========================================================================
+     SPACING — 1px base so numbers = pixels
+     p-8 = 8px, gap-24 = 24px, m-16 = 16px
+     CDS grid values: 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 112
+     ======================================================================== */
+  --spacing: 1px;
+
+  /* ========================================================================
+     FONT FAMILY
+     ======================================================================== */
+  --font-family-sans: "Source Sans 3", "Source Sans Pro", Arial, sans-serif;
+
+  /* ========================================================================
+     FONT WEIGHTS
+     ======================================================================== */
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================================================
+     FONT SIZES — named CDS typography variants
+     Use: text-body-primary, text-title-lg, text-display, etc.
+     ======================================================================== */
+  --font-size-body-tertiary: 0.75rem;       /* 12px */
+  --font-size-body-secondary: 0.875rem;     /* 14px */
+  --font-size-body-primary: 1rem;           /* 16px */
+  --font-size-action-secondary: 0.875rem;   /* 14px */
+  --font-size-action-primary: 1rem;         /* 16px */
+  --font-size-subtitle-small: 0.875rem;     /* 14px */
+  --font-size-subtitle-medium: 1rem;        /* 16px */
+  --font-size-subtitle-large: 1.25rem;      /* 20px */
+  --font-size-title-xs: 1.5rem;             /* 24px */
+  --font-size-title-sm: 1.875rem;           /* 30px */
+  --font-size-title-md: 2.25rem;            /* 36px */
+  --font-size-title-lg: 3rem;               /* 48px */
+  --font-size-display-sm: 2.5rem;           /* 40px */
+  --font-size-display: 4rem;                /* 64px */
+
+  /* Raw size scale for flexibility */
+  --font-size-8: 0.5rem;
+  --font-size-10: 0.625rem;
+  --font-size-12: 0.75rem;
+  --font-size-14: 0.875rem;
+  --font-size-16: 1rem;
+  --font-size-20: 1.25rem;
+  --font-size-24: 1.5rem;
+  --font-size-28: 1.75rem;
+  --font-size-30: 1.875rem;
+  --font-size-32: 2rem;
+  --font-size-36: 2.25rem;
+  --font-size-40: 2.5rem;
+  --font-size-48: 3rem;
+  --font-size-64: 4rem;
+
+  /* ========================================================================
+     LINE HEIGHTS
+     ======================================================================== */
+  --leading-none: 1;
+  --leading-tight: 1.125;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ========================================================================
+     LETTER SPACING
+     ======================================================================== */
+  --tracking-tighter: -0.01em;
+  --tracking-tight: -0.005em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.01em;
+
+  /* ========================================================================
+     COLORS — CDS scales
+     Use: bg-blue-700, text-grey-975, border-red-200, etc.
+     ======================================================================== */
+
+  /* White & transparent */
+  --color-white: #ffffff;
+  --color-black: #0f1114;
+  --color-transparent: transparent;
+
+  /* Grey */
+  --color-grey-25: #f2f5fa;
+  --color-grey-50: #e8eef7;
+  --color-grey-100: #dae1ed;
+  --color-grey-200: #c1cad9;
+  --color-grey-300: #a7b4c9;
+  --color-grey-400: #8495b0;
+  --color-grey-500: #6d7c99;
+  --color-grey-600: #5b6780;
+  --color-grey-700: #404b61;
+  --color-grey-800: #363f52;
+  --color-grey-900: #2d3440;
+  --color-grey-950: #1e2229;
+  --color-grey-975: #0f1114;
+
+  /* Blue */
+  --color-blue-25: #f0f6ff;
+  --color-blue-50: #e3eeff;
+  --color-blue-100: #cfe2ff;
+  --color-blue-200: #adcfff;
+  --color-blue-300: #87b8ff;
+  --color-blue-400: #5b9dfc;
+  --color-blue-500: #3587fc;
+  --color-blue-600: #1e72eb;
+  --color-blue-700: #0056d2;
+  --color-blue-800: #0048b0;
+  --color-blue-900: #003b8f;
+  --color-blue-950: #002761;
+  --color-blue-975: #00112a;
+
+  /* Purple */
+  --color-purple-25: #f9f5ff;
+  --color-purple-50: #f1e8ff;
+  --color-purple-100: #e7d9ff;
+  --color-purple-200: #d3bbfa;
+  --color-purple-300: #c29ffc;
+  --color-purple-400: #a678f5;
+  --color-purple-500: #9258f5;
+  --color-purple-600: #8040ed;
+  --color-purple-700: #6923de;
+  --color-purple-800: #5b15cf;
+  --color-purple-900: #4a0fab;
+  --color-purple-950: #340385;
+  --color-purple-975: #150333;
+
+  /* Green */
+  --color-green-25: #ebfdf8;
+  --color-green-50: #cffaed;
+  --color-green-100: #b8f2e1;
+  --color-green-200: #94e5cd;
+  --color-green-300: #66dab7;
+  --color-green-400: #3bc29a;
+  --color-green-500: #22a880;
+  --color-green-600: #118f69;
+  --color-green-700: #087051;
+  --color-green-800: #095941;
+  --color-green-900: #074735;
+  --color-green-950: #062e21;
+  --color-green-975: #02150f;
+
+  /* Red */
+  --color-red-25: #fdf5f5;
+  --color-red-50: #fce5e8;
+  --color-red-100: #fad2d8;
+  --color-red-200: #ffb0bc;
+  --color-red-300: #ff8f9f;
+  --color-red-400: #fc657d;
+  --color-red-500: #f0465f;
+  --color-red-600: #ed2644;
+  --color-red-700: #d30a28;
+  --color-red-800: #c4001d;
+  --color-red-900: #9e0018;
+  --color-red-950: #66000f;
+  --color-red-975: #2e0007;
+
+  /* Yellow */
+  --color-yellow-25: #fff4e8;
+  --color-yellow-50: #ffeac9;
+  --color-yellow-100: #ffdc96;
+  --color-yellow-200: #ffc936;
+  --color-yellow-300: #faaf00;
+  --color-yellow-400: #f28100;
+  --color-yellow-500: #de6000;
+  --color-yellow-600: #c74504;
+  --color-yellow-700: #a32e00;
+  --color-yellow-800: #852600;
+  --color-yellow-900: #6b1e00;
+  --color-yellow-950: #471400;
+  --color-yellow-975: #200900;
+
+  /* Pink */
+  --color-pink-25: #fff2fd;
+  --color-pink-50: #ffe0f9;
+  --color-pink-100: #ffccf5;
+  --color-pink-200: #ffa6ee;
+  --color-pink-300: #ff82e7;
+  --color-pink-400: #f05bd5;
+  --color-pink-500: #e339c4;
+  --color-pink-600: #c429a8;
+  --color-pink-700: #9c1a84;
+  --color-pink-800: #7d166a;
+  --color-pink-900: #661057;
+  --color-pink-950: #45093a;
+  --color-pink-975: #1e051a;
+
+  /* Aqua */
+  --color-aqua-25: #f0fbff;
+  --color-aqua-50: #f5fcff;
+  --color-aqua-100: #e5f7ff;
+  --color-aqua-200: #d5f3ff;
+  --color-aqua-300: #b0e5fb;
+  --color-aqua-400: #85d6f9;
+  --color-aqua-500: #60caf7;
+  --color-aqua-600: #4da2c6;
+  --color-aqua-700: #2a7ea3;
+  --color-aqua-800: #265f77;
+  --color-aqua-900: #174458;
+
+  /* Darken (black overlays — for modal/dialog backdrops) */
+  --color-darken-25: rgba(15, 17, 20, 0.03);
+  --color-darken-50: rgba(15, 17, 20, 0.05);
+  --color-darken-100: rgba(15, 17, 20, 0.1);
+  --color-darken-200: rgba(15, 17, 20, 0.2);
+  --color-darken-300: rgba(15, 17, 20, 0.3);
+  --color-darken-400: rgba(15, 17, 20, 0.4);
+  --color-darken-500: rgba(15, 17, 20, 0.5);
+  --color-darken-600: rgba(15, 17, 20, 0.6);
+  --color-darken-700: rgba(15, 17, 20, 0.7);
+  --color-darken-800: rgba(15, 17, 20, 0.8);
+  --color-darken-900: rgba(15, 17, 20, 0.9);
+  --color-darken-950: rgba(15, 17, 20, 0.95);
+  --color-darken-975: rgba(15, 17, 20, 0.98);
+
+  /* Lighten (white overlays) */
+  --color-lighten-25: rgba(255, 255, 255, 0.03);
+  --color-lighten-50: rgba(255, 255, 255, 0.05);
+  --color-lighten-100: rgba(255, 255, 255, 0.1);
+  --color-lighten-200: rgba(255, 255, 255, 0.2);
+  --color-lighten-300: rgba(255, 255, 255, 0.3);
+  --color-lighten-400: rgba(255, 255, 255, 0.4);
+  --color-lighten-500: rgba(255, 255, 255, 0.5);
+  --color-lighten-600: rgba(255, 255, 255, 0.6);
+  --color-lighten-700: rgba(255, 255, 255, 0.7);
+  --color-lighten-800: rgba(255, 255, 255, 0.8);
+  --color-lighten-900: rgba(255, 255, 255, 0.9);
+  --color-lighten-950: rgba(255, 255, 255, 0.95);
+  --color-lighten-975: rgba(255, 255, 255, 0.98);
+
+  /* ========================================================================
+     BORDER RADIUS
+     Use: rounded-4, rounded-8, rounded-16, rounded-max, etc.
+     ======================================================================== */
+  --radius-2: 2px;
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+  --radius-32: 32px;
+  --radius-max: 50px;
+  --radius-full: 9999px;
+
+  /* ========================================================================
+     SHADOWS / ELEVATION
+     Use: shadow-elevation-1, shadow-elevation-2, shadow-elevation-3
+     ======================================================================== */
+  --shadow-none: none;
+  --shadow-elevation-1: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 2px 12px 2px rgba(15, 17, 20, 0.1);
+  --shadow-elevation-2: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 4px 12px 4px rgba(15, 17, 20, 0.1);
+  --shadow-elevation-3: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 6px 12px 4px rgba(15, 17, 20, 0.1);
+
+  /* ========================================================================
+     BREAKPOINTS — CDS responsive
+     Use: sm:, md:, lg:, xl: prefixes
+     ======================================================================== */
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 1024px;
+  --breakpoint-lg: 1440px;
+  --breakpoint-xl: 1920px;
+
+  /* ========================================================================
+     EASING
+     Use: ease-entrance, ease-exit, ease-standard
+     ======================================================================== */
+  --ease-entrance: ease-out;
+  --ease-exit: ease-in;
+  --ease-standard: ease-in-out;
+}
+
+/* ==========================================================================
+   FORM ELEMENT RESET
+   Browsers don't inherit font-family on form elements — they fall back to
+   the user agent stylesheet (Arial). This ensures they inherit Source Sans 3.
+   ========================================================================== */
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   COMPOSITE TYPOGRAPHY CLASSES
+   These bundle font-size + weight + line-height for each CDS variant.
+   Use: class="cds-title-lg" or class="cds-body-primary"
+   ========================================================================== */
+
+/* Display */
+.cds-display {
+  font-size: 4rem;
+  font-weight: 600;
+  line-height: 4.5rem;
+  letter-spacing: -0.005em;
+}
+.cds-display-sm {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 2.75rem;
+  letter-spacing: -0.005em;
+}
+
+/* Title */
+.cds-title-lg {
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 3.5rem;
+}
+.cds-title-lg-sm {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.5rem;
+}
+.cds-title-md {
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 2.625rem;
+}
+.cds-title-md-sm {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 2.25rem;
+}
+.cds-title-sm {
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 2.25rem;
+}
+.cds-title-sm-sm {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.875rem;
+}
+.cds-title-xs {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+}
+.cds-title-xs-sm {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+/* Subtitle */
+.cds-subtitle-lg {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+.cds-subtitle-md {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+.cds-subtitle-sm {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+}
+
+/* Body */
+.cds-body-primary {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+.cds-body-secondary {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+}
+.cds-body-tertiary {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+}
+
+/* Action */
+.cds-action-primary {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+.cds-action-secondary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+/* Responsive typography: below md breakpoint, titles/display use smaller variants */
+@media (max-width: 1023.95px) {
+  .cds-display { font-size: 2.5rem; line-height: 2.75rem; }
+  .cds-title-lg { font-size: 2rem; line-height: 2.5rem; }
+  .cds-title-md { font-size: 1.75rem; line-height: 2.25rem; }
+  .cds-title-sm { font-size: 1.5rem; line-height: 1.875rem; }
+  .cds-title-xs { font-size: 1.25rem; line-height: 1.5rem; }
+}
+
+/* ==========================================================================
+   FOCUS RING
+   CDS uses a two-color focus ring: purple-700 outer + blue-25 invert.
+   Use: class="cds-focus-ring" on any interactive element, OR apply
+   focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-2
+   ========================================================================== */
+
+.cds-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px #6923de;
+}
+
+/* ==========================================================================
+   Z-INDEX UTILITIES
+   Use: z-modal, z-drawer, z-tooltip, etc.
+   ========================================================================== */
+
+.z-mobile-stepper { z-index: 1000; }
+.z-speed-dial { z-index: 2000; }
+.z-app-bar { z-index: 3000; }
+.z-drawer { z-index: 4000; }
+.z-modal { z-index: 10000; }
+.z-snackbar { z-index: 10100; }
+.z-tooltip { z-index: 11000; }
+
+/* ==========================================================================
+   DURATION UTILITIES
+   Use: duration-fast, duration-normal, duration-slow
+   ========================================================================== */
+
+.duration-instant { transition-duration: 0ms; }
+.duration-fast { transition-duration: 150ms; }
+.duration-normal { transition-duration: 225ms; }
+.duration-slow { transition-duration: 500ms; }

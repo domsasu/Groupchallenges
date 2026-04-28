@@ -1,0 +1,21 @@
+{
+  "name": "@coursera/cds-tailwind",
+  "version": "0.1.0",
+  "description": "Coursera Design System (CDS) tokens configured for Tailwind CSS v4",
+  "main": "index.css",
+  "style": "index.css",
+  "files": [
+    "index.css",
+    "cds-tokens.css",
+    "cds-tailwind.css",
+    "cds-standalone.css"
+  ],
+  "keywords": [
+    "coursera",
+    "design-system",
+    "tailwind",
+    "cds",
+    "design-tokens"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,1305 @@
+@import "tailwindcss";
+@import "./cds-tailwind/cds-standalone.css";
+
+/* ============================================
+   Project tokens (CDS aliases) + layout/shadow/z
+   ============================================ */
+:root {
+  /* Legacy aliases → CDS (for any remaining refs) */
+  --color-primary: var(--cds-color-blue-700);
+  --color-primary-hover: var(--cds-color-blue-800);
+  --color-primary-light: var(--cds-color-blue-25);
+  --color-bg-primary: var(--cds-color-grey-25);
+  --color-bg-white: var(--cds-color-white);
+  --color-text-primary: var(--cds-color-grey-975);
+  --color-text-secondary: var(--cds-color-grey-600);
+  --color-error: var(--cds-color-red-700);
+  --color-warning: var(--cds-color-yellow-700);
+  --color-border-gray: var(--cds-color-grey-200);
+  --color-border-gray-200: var(--cds-color-grey-100);
+  /* Gradients (project-specific, keep hex for gradient stops) */
+  --gradient-primary: linear-gradient(to right, var(--cds-color-yellow-200), var(--cds-color-yellow-700));
+  --gradient-overachieving: linear-gradient(to right, var(--cds-color-purple-600), var(--cds-color-pink-600), var(--cds-color-pink-300));
+  --gradient-overachieving-base: linear-gradient(to right, var(--cds-color-yellow-200), var(--cds-color-yellow-700));
+  /* Spacing / radius / z (unchanged) */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+  --shadow-sm: var(--cds-elevation-level1);
+  --shadow-md: var(--cds-elevation-level2);
+  --shadow-lg: var(--cds-elevation-level2);
+  --shadow-xl: var(--cds-elevation-level3);
+  --shadow-2xl: var(--cds-elevation-level3);
+  --z-base: 10;
+  --z-dropdown: 20;
+  --z-sticky: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-tooltip: 60;
+  --z-max: 100;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+*, *::before, *::after {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+html {
+  font-size: 16px; /* Base for rem calculations */
+}
+
+body {
+  font-family: 'Source Sans 3', 'Source Sans Pro', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--cds-color-grey-975);
+  background-color: var(--cds-color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure inputs and buttons inherit font */
+input, button, textarea, select {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+@keyframes cds-live-pulse-ring {
+  0%, 100% {
+    box-shadow: 0 0 4px 2px color-mix(in srgb, var(--cds-color-green-500) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px color-mix(in srgb, var(--cds-color-green-500) 22%, transparent);
+  }
+}
+
+.cds-live-pulse-ring {
+  animation: cds-live-pulse-ring 2.2s ease-in-out infinite;
+}
+
+@keyframes cds-live-pulse-dot {
+  0%, 100% {
+    box-shadow: 0 0 2px 1px color-mix(in srgb, var(--cds-color-green-500) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 8px 3px color-mix(in srgb, var(--cds-color-green-500) 30%, transparent);
+  }
+}
+
+.cds-live-pulse-dot {
+  animation: cds-live-pulse-dot 2.2s ease-in-out infinite;
+}
+
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cds-color-grey-50);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cds-color-grey-300);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cds-color-grey-400);
+}
+
+/* Custom scrollbar class for components */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cds-color-grey-300) var(--cds-color-grey-50);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--cds-color-grey-50);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--cds-color-grey-300);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--cds-color-grey-400);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+/* Sparkle Burst Animation */
+@keyframes sparkle-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0);
+    opacity: 0;
+  }
+}
+
+.sparkle {
+  position: absolute;
+  top: 50%;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: sparkle-burst 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  z-index: var(--z-modal);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--cds-color-white) 80%, transparent);
+}
+
+/* Coin Flip Animation */
+@keyframes coin-flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-coin-flip {
+  animation: coin-flip 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+/* Softer, slower fade-in for video end overlay */
+.animate-fade-in-soft {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+/* Feed rail cohort avatars — gentle in-circle drift (Unsplash stills feel slightly alive) */
+@keyframes cohort-rail-avatar-drift {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+
+.cohort-rail-avatar-motion {
+  animation: cohort-rail-avatar-drift 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cohort-rail-avatar-motion {
+    animation: none;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+/* Header “new activity” dot — soft pulsing blue glow (white halo preserved) */
+/* Spread 0 on blue layers so blur starts at the dot edge (no “floating” glow gap). */
+@keyframes header-activity-dot-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px var(--cds-color-white),
+      0 0 3px 0 color-mix(in srgb, var(--cds-color-blue-700) 55%, transparent),
+      0 0 10px 0 color-mix(in srgb, var(--cds-color-blue-700) 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px var(--cds-color-white),
+      0 0 6px 0 color-mix(in srgb, var(--cds-color-blue-700) 65%, transparent),
+      0 0 16px 0 color-mix(in srgb, var(--cds-color-blue-700) 38%, transparent);
+  }
+}
+
+.animate-header-activity-dot-glow {
+  animation: header-activity-dot-glow 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-header-activity-dot-glow {
+    animation: none;
+    box-shadow:
+      0 0 0 1px var(--cds-color-white),
+      0 0 5px 0 color-mix(in srgb, var(--cds-color-blue-700) 45%, transparent);
+  }
+}
+
+/* Count Up Animation - For animated numbers */
+@keyframes count-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-up {
+  animation: count-up 0.3s ease-out forwards;
+}
+
+/* Dropdown Enter Animation */
+@keyframes dropdown-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown-enter {
+  animation: dropdown-enter 0.2s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+/* Scale Up Animation (for modals) */
+@keyframes scale-up {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scale Up with Translate (for intro modal) */
+@keyframes scale-up-translate {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-scale-up {
+  animation: scale-up 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+.animate-scale-up-translate {
+  animation: scale-up-translate 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Float Animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Gentle Bounce Animation */
+@keyframes gentle-bounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  25% {
+    transform: translateY(-8px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  75% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-gentle-bounce {
+  animation: gentle-bounce 4s ease-in-out infinite;
+}
+
+/* Coin Spin Animation */
+@keyframes coin-spin {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-coin-spin {
+  animation: coin-spin 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0.5s;
+}
+
+/* Slow Spin Animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Card Slide Up */
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 3D Flip Utilities */
+.perspective-500 {
+  perspective: 500px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.rotate-y-0 {
+  transform: rotateY(0deg);
+}
+
+.-rotate-y-180 {
+  transform: rotateY(-180deg);
+}
+
+/* Confetti Animations */
+@keyframes confetti-left {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+@keyframes confetti-right {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+.animate-confetti-left {
+  animation: confetti-left 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-confetti-right {
+  animation: confetti-right 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes shine {
+    from { transform: translateX(-100%) skewX(-12deg); }
+    to { transform: translateX(200%) skewX(-12deg); }
+}
+
+.animate-shine {
+    animation: shine 2s infinite;
+    animation-delay: 2s;
+}
+
+/* Badge Achievement Animations */
+@keyframes coin-collect {
+  0% {
+    transform: translate(var(--start-x), var(--start-y)) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.animate-coin-collect {
+  animation: coin-collect 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-badge-pop {
+  animation: badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slide-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Home page: widgets slide up from below viewport (starting position) into final position */
+@keyframes widget-slide-up {
+  0% {
+    opacity: 0.7;
+    transform: translateY(200px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-widget-slide-up {
+  animation: widget-slide-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered: right sidebar slides up after left section */
+.animate-widget-slide-up-delay {
+  animation: widget-slide-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.25s;
+  opacity: 0.7;
+}
+
+/* Content section (Master SQL / recommendations) loads in after top section */
+.animate-widget-slide-up-content {
+  animation: widget-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.5s;
+  opacity: 0.7;
+}
+
+/* Enrolled course switch: skeleton placeholder flash (optional stronger pulse) */
+@keyframes skeleton-flash {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+.animate-skeleton-flash {
+  animation: skeleton-flash 0.8s ease-in-out infinite;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Coin Fly Into Bucket */
+@keyframes coin-fly-into-bucket {
+  0% {
+    transform: translate(-60px, -20px) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-40px, -15px) scale(1);
+  }
+  80% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, 0px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.animate-coin-fly-into-bucket {
+  animation: coin-fly-into-bucket 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Spark Fly Animation */
+@keyframes spark-fire {
+  0% { transform: rotate(var(--spark-angle)) translateX(10px) scale(1); opacity: 1; }
+  100% { transform: rotate(var(--spark-angle)) translateX(24px) scale(0); opacity: 0; }
+}
+
+.animate-spark {
+  animation: spark-fire 0.6s ease-out forwards;
+}
+
+/* Target Row Pulse Animation */
+@keyframes target-pulse {
+  0% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+  25% {
+    background-color: color-mix(in srgb, var(--cds-color-purple-600) 15%, transparent);
+    box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--cds-color-purple-600) 40%, transparent), 0 0 20px color-mix(in srgb, var(--cds-color-purple-600) 30%, transparent);
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--cds-color-purple-600) 12%, transparent);
+    box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--cds-color-purple-600) 35%, transparent), 0 0 16px color-mix(in srgb, var(--cds-color-purple-600) 25%, transparent);
+  }
+  70% {
+    background-color: color-mix(in srgb, var(--cds-color-purple-600) 6%, transparent);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cds-color-purple-600) 20%, transparent), 0 0 8px color-mix(in srgb, var(--cds-color-purple-600) 10%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+}
+
+.animate-target-pulse {
+  animation: target-pulse 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 1s;
+  z-index: 50;
+  position: relative;
+}
+
+/* XP Drop Animation - Slow arc bounce to skill areas */
+@keyframes xp-drop-arc {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-20px, 30px) scale(1.1);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-40px, 80px) scale(1.15);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-55px, 150px) scale(1.1);
+  }
+  65% {
+    opacity: 1;
+    transform: translate(-45px, 200px) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-40px, 190px) scale(1.08);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-35px, 205px) scale(1);
+  }
+  92% {
+    opacity: 1;
+    transform: translate(-30px, 198px) scale(1.03);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-25px, 210px) scale(0.95);
+  }
+}
+
+.animate-xp-drop {
+  animation: xp-drop-arc 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Card Fly Up Animation - Cards flying into progress bar */
+@keyframes card-fly-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.02);
+  }
+  40% {
+    opacity: 0.9;
+    transform: translateY(-80px) scale(0.85);
+  }
+  60% {
+    opacity: 0.6;
+    transform: translateY(-140px) scale(0.5);
+  }
+  80% {
+    opacity: 0.3;
+    transform: translateY(-180px) scale(0.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-200px) scale(0.1);
+  }
+}
+
+.animate-card-fly-up {
+  animation: card-fly-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Card Fly to Badge Animation - First card (left) flies to top-right badge */
+@keyframes card-fly-to-badge-left {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(20px, -30px) scale(0.9);
+  }
+  40% {
+    opacity: 0.95;
+    transform: translate(180px, -100px) scale(0.5);
+  }
+  70% {
+    opacity: 0.7;
+    transform: translate(320px, -150px) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(380px, -170px) scale(0.05);
+  }
+}
+
+/* Card Fly to Badge Animation - Second card (right) flies to top-right badge - same direction as left card */
+@keyframes card-fly-to-badge-right {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(15px, -30px) scale(0.9);
+  }
+  40% {
+    opacity: 0.95;
+    transform: translate(120px, -100px) scale(0.5);
+  }
+  70% {
+    opacity: 0.7;
+    transform: translate(200px, -150px) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(230px, -170px) scale(0.05);
+  }
+}
+
+.animate-card-fly-to-badge-left {
+  animation: card-fly-to-badge-left 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.animate-card-fly-to-badge-right {
+  animation: card-fly-to-badge-right 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Card Fly to Badge Animation - Centered card flies to top-right badge */
+@keyframes card-fly-to-badge-center {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(50px, -30px) scale(0.9);
+  }
+  40% {
+    opacity: 0.95;
+    transform: translate(180px, -100px) scale(0.5);
+  }
+  70% {
+    opacity: 0.7;
+    transform: translate(280px, -150px) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(320px, -170px) scale(0.05);
+  }
+}
+
+.animate-card-fly-to-badge-center {
+  animation: card-fly-to-badge-center 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Badge pulse animation when receiving XP */
+@keyframes badge-receive-xp {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cds-color-green-500) 50%, transparent);
+  }
+  50% {
+    transform: scale(1.25);
+    box-shadow: 0 0 20px 5px color-mix(in srgb, var(--cds-color-green-500) 40%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-badge-receive-xp {
+  animation: badge-receive-xp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glow Pulse Animation - For CTAs that need attention */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px 2px color-mix(in srgb, var(--cds-color-blue-700) 40%, transparent), 0 4px 15px color-mix(in srgb, var(--cds-color-blue-700) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 25px 6px color-mix(in srgb, var(--cds-color-blue-700) 50%, transparent), 0 4px 20px color-mix(in srgb, var(--cds-color-blue-700) 40%, transparent);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Slide Up From Bottom - For bottom sheet modals */
+@keyframes slide-up-from-bottom {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-from-bottom {
+  animation: slide-up-from-bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Badge Flicker Animation */
+@keyframes badge-flicker {
+  0%, 90%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  93% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  96% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-badge-flicker {
+  animation: badge-flicker 5s ease-in-out infinite;
+}
+
+/* Bounce In Animation - For active lesson indicator */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+/* Card Styles */
+.card {
+  background: var(--cds-color-white);
+  border: 1px solid var(--cds-color-grey-100);
+  border-radius: var(--cds-border-radius-200);
+  box-shadow: var(--cds-elevation-level1);
+}
+
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  box-shadow: var(--cds-elevation-level2);
+  transform: translateY(-1px);
+}
+
+/* Button Variants */
+.btn-primary {
+  background-color: var(--cds-color-blue-700);
+  color: var(--cds-color-white);
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--cds-border-radius-100);
+  box-shadow: inset 0 0 0 1px var(--cds-color-blue-700);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--cds-color-blue-800);
+  box-shadow: inset 0 0 0 1px var(--cds-color-blue-800);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--cds-color-blue-700);
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: var(--cds-border-radius-100);
+  box-shadow: inset 0 0 0 1px var(--cds-color-blue-700);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--cds-color-blue-25);
+  box-shadow: inset 0 0 0 1px var(--cds-color-blue-800);
+}
+
+/* Progress Bar Styles */
+.progress-bar {
+  width: 100%;
+  height: 0.625rem;
+  background-color: var(--cds-color-grey-50);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  transition: width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progress-bar-fill-overachieving {
+  background: var(--gradient-overachieving);
+}
+
+/* Text Styles */
+.text-primary {
+  color: var(--cds-color-grey-975);
+}
+
+.text-secondary {
+  color: var(--cds-color-grey-600);
+}
+
+.text-muted {
+  color: var(--cds-color-grey-600);
+}
+
+/* Font Weight Utilities */
+.font-light {
+  font-weight: 300;
+}
+
+.font-normal {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* ============================================
+   Coursera Design System (CDS) Typography
+   Based on Source Sans Pro font family
+   ============================================ */
+
+/* ----- Display ----- */
+/* Large: Desktop/Tablet (768px+) */
+.cds-display-large {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 4rem; /* 64px */
+  line-height: 4.5rem; /* 72px */
+  font-weight: 600;
+  letter-spacing: -0.01em; /* -1% */
+}
+
+/* Small: Mobile (<768px) */
+.cds-display-small {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 2.5rem; /* 40px */
+  line-height: 2.75rem; /* 44px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ----- Title Large ----- */
+.cds-title-large-lg {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 3rem; /* 48px */
+  line-height: 3.5rem; /* 56px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cds-title-large-sm {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 2rem; /* 32px */
+  line-height: 2.5rem; /* 40px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ----- Title Large Compact ----- */
+.cds-title-large-compact-lg {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 2.5rem; /* 40px */
+  line-height: 3rem; /* 48px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cds-title-large-compact-sm {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.75rem; /* 28px */
+  line-height: 2rem; /* 32px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ----- Title Medium ----- */
+.cds-title-medium-lg {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 2.25rem; /* 36px */
+  line-height: 2.625rem; /* 42px */
+  font-weight: 600;
+  letter-spacing: -0.005em; /* -0.5% */
+}
+
+.cds-title-medium-sm {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.75rem; /* 28px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* ----- Title Small ----- */
+.cds-title-small-lg {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.cds-title-small-sm {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.5rem; /* 24px */
+  line-height: 1.875rem; /* 30px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* ----- Title XSmall ----- */
+.cds-title-xsmall-lg {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.5rem; /* 24px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.cds-title-xsmall-sm {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* ----- Subtitle ----- */
+.cds-subtitle-large {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600;
+  letter-spacing: -0.003em; /* -0.3% */
+}
+
+.cds-subtitle-medium {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1rem; /* 16px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 600;
+  letter-spacing: -0.003em;
+}
+
+.cds-subtitle-small {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.125rem; /* 18px */
+  font-weight: 600;
+  letter-spacing: -0.003em;
+}
+
+/* ----- Body ----- */
+.cds-body-primary {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.cds-body-secondary {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.cds-body-tertiary {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.125rem; /* 18px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* ----- Action (Buttons/Links) ----- */
+.cds-action-primary {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600;
+  letter-spacing: 0.01em; /* 1% */
+}
+
+.cds-action-secondary {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================
+   Legacy Typography Classes (Mapped to CDS)
+   Kept for backwards compatibility
+   ============================================ */
+
+/* Headlines - All headlines are semibold by default */
+/* Legacy typography — use CDS classes in TSX (cds-title-sm, cds-body-primary, etc.) and CDS colors here */
+.headline-xl { color: var(--cds-color-grey-975); }
+.headline-lg { color: var(--cds-color-grey-975); }
+.headline-md { color: var(--cds-color-grey-975); }
+.headline-sm { color: var(--cds-color-grey-975); }
+.headline-xs { color: var(--cds-color-grey-975); }
+.headline-section { color: var(--cds-color-grey-975); }
+.headline-subsection { color: var(--cds-color-grey-975); }
+.body-lg-semibold { color: var(--cds-color-grey-975); }
+.body-md-semibold { }
+.body-sm-semibold { }
+.body-lg { }
+.body-md { }
+.body-sm { }
+.btn-text-lg { }
+.btn-text-md { }
+.btn-text-sm { }
+.label-sm { }
+.label-xs { }
+
+/* Background Utilities */
+.bg-primary {
+  background-color: var(--cds-color-grey-25);
+}
+
+.bg-white {
+  background-color: var(--cds-color-white);
+}
+
+/* Border Utilities */
+.border-gray {
+  border-color: var(--cds-color-grey-200);
+}
+
+.border-gray-100 {
+  border-color: var(--cds-color-grey-50);
+}
+
+.border-gray-200 {
+  border-color: var(--cds-color-grey-100);
+}
+
+/* Status Badge Styles */
+.badge-success {
+  background-color: var(--cds-color-green-50);
+  color: var(--cds-color-green-700);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.badge-warning {
+  background-color: var(--cds-color-yellow-50);
+  color: var(--cds-color-yellow-700);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--cds-color-utility-overlay);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal-backdrop);
+}
+
+/* Transition Utilities */
+.transition-colors {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.transition-all {
+  transition: all 0.2s ease;
+}
+
+/* Breathe Animation for percentage pill */
+@keyframes breathe {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 0.6s ease-in-out;
+}
+
+/* Feed card “cheer” — single-play ripple + icon pop */
+@keyframes feed-like-ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.25);
+    opacity: 0;
+  }
+}
+
+.feed-like-ripple {
+  position: absolute;
+  inset: -6px;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--cds-color-blue-500) 40%, transparent);
+  pointer-events: none;
+  animation: feed-like-ripple 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes feed-like-icon-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-feed-like-icon-pop {
+  animation: feed-like-icon-pop 0.48s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}

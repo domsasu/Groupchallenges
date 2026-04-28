@@ -1,0 +1,589 @@
+/* ==========================================================================
+   CDS Standalone — Design Tokens + Typography + Utilities
+
+   USE THIS for existing projects that already have Tailwind (any version).
+   It adds CDS tokens and classes WITHOUT overriding your existing Tailwind
+   setup, spacing, or colors.
+
+   What's included:
+   - All CDS CSS custom properties (colors, spacing, radius, elevation, etc.)
+   - CDS typography composite classes (.cds-display, .cds-body-primary, etc.)
+   - CDS z-index utilities (.z-modal, .z-drawer, etc.)
+   - CDS duration utilities (.duration-fast, .duration-normal, etc.)
+
+   What's NOT included (on purpose):
+   - No @theme block — won't reset your Tailwind defaults
+   - No --spacing: 1px — won't change what p-4 or gap-6 means
+   - No --color-*: initial — won't wipe your existing color palette
+
+   Usage:
+   - Add <link> to index.html or @import in your CSS
+   - Use .cds-* typography classes on elements: <h1 class="cds-title-lg">
+   - Use var(--cds-*) tokens in inline styles or custom CSS
+   - AI assistants will use CDS conventions when writing new components
+   ========================================================================== */
+
+
+/* ==========================================================================
+   CDS DESIGN TOKENS — CSS Custom Properties
+   Source: webedx-spark/cds (Coursera Design System)
+   ========================================================================== */
+
+:root {
+  /* ========================================================================
+     COLOR SCALES
+     7 scales × 13 weights (25–975), from lightest to darkest
+     ======================================================================== */
+
+  /* Grey */
+  --cds-color-grey-25: #f2f5fa;
+  --cds-color-grey-50: #e8eef7;
+  --cds-color-grey-100: #dae1ed;
+  --cds-color-grey-200: #c1cad9;
+  --cds-color-grey-300: #a7b4c9;
+  --cds-color-grey-400: #8495b0;
+  --cds-color-grey-500: #6d7c99;
+  --cds-color-grey-600: #5b6780;
+  --cds-color-grey-700: #404b61;
+  --cds-color-grey-800: #363f52;
+  --cds-color-grey-900: #2d3440;
+  --cds-color-grey-950: #1e2229;
+  --cds-color-grey-975: #0f1114;
+
+  /* Blue */
+  --cds-color-blue-25: #f0f6ff;
+  --cds-color-blue-50: #e3eeff;
+  --cds-color-blue-100: #cfe2ff;
+  --cds-color-blue-200: #adcfff;
+  --cds-color-blue-300: #87b8ff;
+  --cds-color-blue-400: #5b9dfc;
+  --cds-color-blue-500: #3587fc;
+  --cds-color-blue-600: #1e72eb;
+  --cds-color-blue-700: #0056d2;
+  --cds-color-blue-800: #0048b0;
+  --cds-color-blue-900: #003b8f;
+  --cds-color-blue-950: #002761;
+  --cds-color-blue-975: #00112a;
+
+  /* Purple */
+  --cds-color-purple-25: #f9f5ff;
+  --cds-color-purple-50: #f1e8ff;
+  --cds-color-purple-100: #e7d9ff;
+  --cds-color-purple-200: #d3bbfa;
+  --cds-color-purple-300: #c29ffc;
+  --cds-color-purple-400: #a678f5;
+  --cds-color-purple-500: #9258f5;
+  --cds-color-purple-600: #8040ed;
+  --cds-color-purple-700: #6923de;
+  --cds-color-purple-800: #5b15cf;
+  --cds-color-purple-900: #4a0fab;
+  --cds-color-purple-950: #340385;
+  --cds-color-purple-975: #150333;
+
+  /* Green */
+  --cds-color-green-25: #ebfdf8;
+  --cds-color-green-50: #cffaed;
+  --cds-color-green-100: #b8f2e1;
+  --cds-color-green-200: #94e5cd;
+  --cds-color-green-300: #66dab7;
+  --cds-color-green-400: #3bc29a;
+  --cds-color-green-500: #22a880;
+  --cds-color-green-600: #118f69;
+  --cds-color-green-700: #087051;
+  --cds-color-green-800: #095941;
+  --cds-color-green-900: #074735;
+  --cds-color-green-950: #062e21;
+  --cds-color-green-975: #02150f;
+
+  /* Red */
+  --cds-color-red-25: #fdf5f5;
+  --cds-color-red-50: #fce5e8;
+  --cds-color-red-100: #fad2d8;
+  --cds-color-red-200: #ffb0bc;
+  --cds-color-red-300: #ff8f9f;
+  --cds-color-red-400: #fc657d;
+  --cds-color-red-500: #f0465f;
+  --cds-color-red-600: #ed2644;
+  --cds-color-red-700: #d30a28;
+  --cds-color-red-800: #c4001d;
+  --cds-color-red-900: #9e0018;
+  --cds-color-red-950: #66000f;
+  --cds-color-red-975: #2e0007;
+
+  /* Yellow */
+  --cds-color-yellow-25: #fff4e8;
+  --cds-color-yellow-50: #ffeac9;
+  --cds-color-yellow-100: #ffdc96;
+  --cds-color-yellow-200: #ffc936;
+  --cds-color-yellow-300: #faaf00;
+  --cds-color-yellow-400: #f28100;
+  --cds-color-yellow-500: #de6000;
+  --cds-color-yellow-600: #c74504;
+  --cds-color-yellow-700: #a32e00;
+  --cds-color-yellow-800: #852600;
+  --cds-color-yellow-900: #6b1e00;
+  --cds-color-yellow-950: #471400;
+  --cds-color-yellow-975: #200900;
+
+  /* Pink */
+  --cds-color-pink-25: #fff2fd;
+  --cds-color-pink-50: #ffe0f9;
+  --cds-color-pink-100: #ffccf5;
+  --cds-color-pink-200: #ffa6ee;
+  --cds-color-pink-300: #ff82e7;
+  --cds-color-pink-400: #f05bd5;
+  --cds-color-pink-500: #e339c4;
+  --cds-color-pink-600: #c429a8;
+  --cds-color-pink-700: #9c1a84;
+  --cds-color-pink-800: #7d166a;
+  --cds-color-pink-900: #661057;
+  --cds-color-pink-950: #45093a;
+  --cds-color-pink-975: #1e051a;
+
+  /* Aqua */
+  --cds-color-aqua-25: #f0fbff;
+  --cds-color-aqua-50: #f5fcff;
+  --cds-color-aqua-100: #e5f7ff;
+  --cds-color-aqua-200: #d5f3ff;
+  --cds-color-aqua-300: #b0e5fb;
+  --cds-color-aqua-400: #85d6f9;
+  --cds-color-aqua-500: #60caf7;
+  --cds-color-aqua-600: #4da2c6;
+  --cds-color-aqua-700: #2a7ea3;
+  --cds-color-aqua-800: #265f77;
+  --cds-color-aqua-900: #174458;
+
+  /* White */
+  --cds-color-white: #ffffff;
+
+  /* Darken (black overlays) */
+  --cds-color-darken-975: rgba(15, 17, 20, 0.98);
+  --cds-color-darken-950: rgba(15, 17, 20, 0.95);
+  --cds-color-darken-900: rgba(15, 17, 20, 0.9);
+  --cds-color-darken-800: rgba(15, 17, 20, 0.8);
+  --cds-color-darken-700: rgba(15, 17, 20, 0.7);
+  --cds-color-darken-600: rgba(15, 17, 20, 0.6);
+  --cds-color-darken-500: rgba(15, 17, 20, 0.5);
+  --cds-color-darken-400: rgba(15, 17, 20, 0.4);
+  --cds-color-darken-300: rgba(15, 17, 20, 0.3);
+  --cds-color-darken-200: rgba(15, 17, 20, 0.2);
+  --cds-color-darken-100: rgba(15, 17, 20, 0.1);
+  --cds-color-darken-50: rgba(15, 17, 20, 0.05);
+  --cds-color-darken-25: rgba(15, 17, 20, 0.03);
+
+  /* Lighten (white overlays) */
+  --cds-color-lighten-975: rgba(255, 255, 255, 0.98);
+  --cds-color-lighten-950: rgba(255, 255, 255, 0.95);
+  --cds-color-lighten-900: rgba(255, 255, 255, 0.9);
+  --cds-color-lighten-800: rgba(255, 255, 255, 0.8);
+  --cds-color-lighten-700: rgba(255, 255, 255, 0.7);
+  --cds-color-lighten-600: rgba(255, 255, 255, 0.6);
+  --cds-color-lighten-500: rgba(255, 255, 255, 0.5);
+  --cds-color-lighten-400: rgba(255, 255, 255, 0.4);
+  --cds-color-lighten-300: rgba(255, 255, 255, 0.3);
+  --cds-color-lighten-200: rgba(255, 255, 255, 0.2);
+  --cds-color-lighten-100: rgba(255, 255, 255, 0.1);
+  --cds-color-lighten-50: rgba(255, 255, 255, 0.05);
+  --cds-color-lighten-25: rgba(255, 255, 255, 0.03);
+
+  /* ========================================================================
+     SEMANTIC COLORS
+     ======================================================================== */
+
+  /* Interactive */
+  --cds-color-interactive-primary: var(--cds-color-blue-700);
+  --cds-color-interactive-primary-hover: var(--cds-color-blue-800);
+  --cds-color-interactive-primary-pressed: var(--cds-color-purple-950);
+  --cds-color-interactive-primary-selected: var(--cds-color-purple-950);
+  --cds-color-interactive-secondary: var(--cds-color-grey-975);
+  --cds-color-interactive-secondary-hover: var(--cds-color-grey-900);
+  --cds-color-interactive-secondary-pressed: var(--cds-color-grey-800);
+  --cds-color-interactive-secondary-selected: var(--cds-color-grey-800);
+  --cds-color-interactive-secondary-inactive: var(--cds-color-grey-600);
+  --cds-color-interactive-stroke-primary-focus: var(--cds-color-purple-700);
+  --cds-color-interactive-stroke-primary-focus-invert: var(--cds-color-blue-25);
+  --cds-color-interactive-background-primary-hover-weak: var(--cds-color-blue-25);
+  --cds-color-interactive-background-primary-pressed-weak: var(--cds-color-purple-25);
+  --cds-color-interactive-background-primary-selected-weak: var(--cds-color-purple-25);
+  --cds-color-interactive-background-secondary-hover-weak: var(--cds-color-grey-25);
+  --cds-color-interactive-background-secondary-selected-weak: var(--cds-color-grey-50);
+  --cds-color-interactive-background-secondary-pressed-weak: var(--cds-color-grey-50);
+
+  /* Neutral */
+  --cds-color-neutral-primary: var(--cds-color-grey-975);
+  --cds-color-neutral-primary-weak: var(--cds-color-grey-600);
+  --cds-color-neutral-primary-invert: var(--cds-color-white);
+  --cds-color-neutral-disabled: var(--cds-color-grey-50);
+  --cds-color-neutral-disabled-strong: var(--cds-color-grey-200);
+  --cds-color-neutral-disabled-weak: var(--cds-color-grey-25);
+  --cds-color-neutral-stroke-primary: var(--cds-color-grey-400);
+  --cds-color-neutral-stroke-primary-weak: var(--cds-color-grey-100);
+  --cds-color-neutral-stroke-primary-invert: var(--cds-color-white);
+  --cds-color-neutral-background-primary: var(--cds-color-white);
+  --cds-color-neutral-background-primary-weak: var(--cds-color-grey-25);
+
+  /* Feedback */
+  --cds-color-feedback-error: var(--cds-color-red-700);
+  --cds-color-feedback-error-hover: var(--cds-color-red-900);
+  --cds-color-feedback-error-weak: var(--cds-color-red-50);
+  --cds-color-feedback-success: var(--cds-color-green-700);
+  --cds-color-feedback-success-hover: var(--cds-color-green-800);
+  --cds-color-feedback-success-weak: var(--cds-color-green-50);
+  --cds-color-feedback-informative: var(--cds-color-blue-700);
+  --cds-color-feedback-informative-weak: var(--cds-color-blue-25);
+  --cds-color-feedback-warning: var(--cds-color-yellow-700);
+  --cds-color-feedback-warning-weak: var(--cds-color-yellow-25);
+  --cds-color-feedback-background-error-weak: var(--cds-color-red-25);
+  --cds-color-feedback-background-success-weak: var(--cds-color-green-25);
+  --cds-color-feedback-background-informative-weak: var(--cds-color-blue-25);
+  --cds-color-feedback-background-warning-weak: var(--cds-color-yellow-25);
+
+  /* Emphasis */
+  --cds-color-emphasis-primary-content: var(--cds-color-blue-800);
+  --cds-color-emphasis-primary-stroke: var(--cds-color-blue-500);
+  --cds-color-emphasis-primary-bg-xweak: var(--cds-color-blue-25);
+  --cds-color-emphasis-primary-bg-weak: var(--cds-color-blue-50);
+  --cds-color-emphasis-primary-bg: var(--cds-color-blue-500);
+  --cds-color-emphasis-primary-bg-strong: var(--cds-color-blue-700);
+  --cds-color-emphasis-primary-bg-xstrong: var(--cds-color-blue-800);
+  --cds-color-emphasis-primary-bg-xxstrong: var(--cds-color-blue-950);
+
+  --cds-color-emphasis-secondary-content: var(--cds-color-pink-800);
+  --cds-color-emphasis-secondary-stroke: var(--cds-color-pink-500);
+  --cds-color-emphasis-secondary-bg-xweak: var(--cds-color-pink-25);
+  --cds-color-emphasis-secondary-bg-weak: var(--cds-color-pink-50);
+  --cds-color-emphasis-secondary-bg: var(--cds-color-pink-500);
+  --cds-color-emphasis-secondary-bg-strong: var(--cds-color-pink-600);
+  --cds-color-emphasis-secondary-bg-xstrong: var(--cds-color-pink-700);
+
+  --cds-color-emphasis-tertiary-content: var(--cds-color-yellow-800);
+  --cds-color-emphasis-tertiary-stroke: var(--cds-color-yellow-300);
+  --cds-color-emphasis-tertiary-bg-xweak: var(--cds-color-yellow-25);
+  --cds-color-emphasis-tertiary-bg-weak: var(--cds-color-yellow-50);
+  --cds-color-emphasis-tertiary-bg: var(--cds-color-yellow-300);
+  --cds-color-emphasis-tertiary-bg-strong: var(--cds-color-yellow-500);
+  --cds-color-emphasis-tertiary-bg-xstrong: var(--cds-color-yellow-600);
+
+  --cds-color-emphasis-quaternary-content: var(--cds-color-purple-950);
+  --cds-color-emphasis-quaternary-stroke: var(--cds-color-purple-700);
+  --cds-color-emphasis-quaternary-bg-xweak: var(--cds-color-purple-25);
+  --cds-color-emphasis-quaternary-bg-weak: var(--cds-color-purple-50);
+  --cds-color-emphasis-quaternary-bg: var(--cds-color-purple-600);
+  --cds-color-emphasis-quaternary-bg-strong: var(--cds-color-purple-700);
+  --cds-color-emphasis-quaternary-bg-xstrong: var(--cds-color-purple-900);
+
+  --cds-color-emphasis-neutral-content: var(--cds-color-grey-600);
+  --cds-color-emphasis-neutral-stroke: var(--cds-color-grey-600);
+  --cds-color-emphasis-neutral-bg-xweak: var(--cds-color-grey-25);
+  --cds-color-emphasis-neutral-bg-weak: var(--cds-color-grey-50);
+  --cds-color-emphasis-neutral-bg: var(--cds-color-grey-500);
+  --cds-color-emphasis-neutral-bg-xstrong: var(--cds-color-grey-900);
+  --cds-color-emphasis-neutral-bg-xxstrong: var(--cds-color-grey-975);
+
+  /* Callouts */
+  --cds-color-callouts-secondary: var(--cds-color-purple-950);
+  --cds-color-callouts-tertiary: var(--cds-color-blue-900);
+  --cds-color-callouts-secondary-invert: var(--cds-color-yellow-200);
+  --cds-color-callouts-tertiary-invert: #b0e5fb;
+  --cds-color-callouts-background-primary: var(--cds-color-blue-700);
+  --cds-color-callouts-background-primary-strong: var(--cds-color-blue-950);
+  --cds-color-callouts-background-primary-weak: var(--cds-color-blue-50);
+  --cds-color-callouts-background-secondary-weak: var(--cds-color-purple-25);
+  --cds-color-callouts-background-tertiary-weak: var(--cds-color-yellow-25);
+
+  /* Utility */
+  --cds-color-utility-overlay: var(--cds-color-darken-500);
+
+  /* ========================================================================
+     TYPOGRAPHY
+     ======================================================================== */
+
+  --cds-font-family: "Source Sans 3", "Source Sans Pro", Arial, sans-serif;
+
+  --cds-font-weight-regular: 400;
+  --cds-font-weight-semibold: 600;
+  --cds-font-weight-bold: 700;
+
+  /* Font sizes */
+  --cds-font-size-100: 0.5rem;     /* 8px */
+  --cds-font-size-125: 0.625rem;   /* 10px */
+  --cds-font-size-150: 0.75rem;    /* 12px */
+  --cds-font-size-175: 0.875rem;   /* 14px */
+  --cds-font-size-200: 1rem;       /* 16px */
+  --cds-font-size-250: 1.25rem;    /* 20px */
+  --cds-font-size-300: 1.5rem;     /* 24px */
+  --cds-font-size-350: 1.75rem;    /* 28px */
+  --cds-font-size-375: 1.875rem;   /* 30px */
+  --cds-font-size-400: 2rem;       /* 32px */
+  --cds-font-size-450: 2.25rem;    /* 36px */
+  --cds-font-size-500: 2.5rem;     /* 40px */
+  --cds-font-size-600: 3rem;       /* 48px */
+  --cds-font-size-800: 4rem;       /* 64px */
+
+  /* Line heights */
+  --cds-line-height-200: 1rem;       /* 16px */
+  --cds-line-height-225: 1.125rem;   /* 18px */
+  --cds-line-height-250: 1.25rem;    /* 20px */
+  --cds-line-height-300: 1.5rem;     /* 24px */
+  --cds-line-height-350: 1.75rem;    /* 28px */
+  --cds-line-height-400: 2rem;       /* 32px */
+  --cds-line-height-450: 2.25rem;    /* 36px */
+  --cds-line-height-500: 2.5rem;     /* 40px */
+  --cds-line-height-525: 2.625rem;   /* 42px */
+  --cds-line-height-550: 2.75rem;    /* 44px */
+  --cds-line-height-600: 3rem;       /* 48px */
+  --cds-line-height-700: 3.5rem;     /* 56px */
+  --cds-line-height-900: 4.5rem;     /* 72px */
+
+  /* Letter spacing */
+  --cds-letter-spacing-0: 0em;
+  --cds-letter-spacing-100: 0.01em;
+  --cds-letter-spacing-minus50: -0.005em;
+  --cds-letter-spacing-minus100: -0.01em;
+
+  /* ========================================================================
+     SPACING (8px grid)
+     ======================================================================== */
+
+  --cds-spacing-25: 2px;
+  --cds-spacing-50: 4px;
+  --cds-spacing-100: 8px;
+  --cds-spacing-150: 12px;
+  --cds-spacing-200: 16px;
+  --cds-spacing-300: 24px;
+  --cds-spacing-400: 32px;
+  --cds-spacing-600: 48px;
+  --cds-spacing-800: 64px;
+  --cds-spacing-1000: 80px;
+  --cds-spacing-1400: 112px;
+
+  /* ========================================================================
+     BORDER RADIUS
+     ======================================================================== */
+
+  --cds-border-radius-25: 2px;
+  --cds-border-radius-50: 4px;
+  --cds-border-radius-100: 8px;
+  --cds-border-radius-200: 16px;
+  --cds-border-radius-300: 24px;
+  --cds-border-radius-400: 32px;
+  --cds-border-radius-max: 50px;
+
+  /* ========================================================================
+     ELEVATION / SHADOWS
+     ======================================================================== */
+
+  --cds-elevation-level1: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 2px 12px 2px rgba(15, 17, 20, 0.1);
+  --cds-elevation-level2: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 4px 12px 4px rgba(15, 17, 20, 0.1);
+  --cds-elevation-level3: 0px 0px 4px 0px rgba(15, 17, 20, 0.1), 0px 6px 12px 4px rgba(15, 17, 20, 0.1);
+
+  /* ========================================================================
+     TRANSITIONS
+     ======================================================================== */
+
+  --cds-transition-instant: 0ms;
+  --cds-transition-fast: 150ms;
+  --cds-transition-normal: 225ms;
+  --cds-transition-slow: 500ms;
+
+  --cds-ease-entrance: ease-out;
+  --cds-ease-exit: ease-in;
+  --cds-ease-standard: ease-in-out;
+
+  /* ========================================================================
+     Z-INDEX
+     ======================================================================== */
+
+  --cds-z-mobile-stepper: 1000;
+  --cds-z-speed-dial: 2000;
+  --cds-z-app-bar: 3000;
+  --cds-z-drawer: 4000;
+  --cds-z-modal: 10000;
+  --cds-z-snackbar: 10100;
+  --cds-z-tooltip: 11000;
+}
+
+
+/* ==========================================================================
+   FORM ELEMENT RESET
+   Browsers don't inherit font-family on form elements — they fall back to
+   the user agent stylesheet (Arial). This ensures they inherit Source Sans 3.
+   ========================================================================== */
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* ==========================================================================
+   COMPOSITE TYPOGRAPHY CLASSES
+   These bundle font-size + weight + line-height for each CDS variant.
+   Use: class="cds-title-lg" or class="cds-body-primary"
+   ========================================================================== */
+
+/* Display */
+.cds-display {
+  font-family: var(--cds-font-family);
+  font-size: 4rem;
+  font-weight: 600;
+  line-height: 4.5rem;
+  letter-spacing: -0.005em;
+}
+.cds-display-sm {
+  font-family: var(--cds-font-family);
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 2.75rem;
+  letter-spacing: -0.005em;
+}
+
+/* Title */
+.cds-title-lg {
+  font-family: var(--cds-font-family);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 3.5rem;
+}
+.cds-title-lg-sm {
+  font-family: var(--cds-font-family);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.5rem;
+}
+.cds-title-md {
+  font-family: var(--cds-font-family);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 2.625rem;
+}
+.cds-title-md-sm {
+  font-family: var(--cds-font-family);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 2.25rem;
+}
+.cds-title-sm {
+  font-family: var(--cds-font-family);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 2.25rem;
+}
+.cds-title-sm-sm {
+  font-family: var(--cds-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.875rem;
+}
+.cds-title-xs {
+  font-family: var(--cds-font-family);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+}
+.cds-title-xs-sm {
+  font-family: var(--cds-font-family);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+/* Subtitle */
+.cds-subtitle-lg {
+  font-family: var(--cds-font-family);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+.cds-subtitle-md {
+  font-family: var(--cds-font-family);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+.cds-subtitle-sm {
+  font-family: var(--cds-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+}
+
+/* Body */
+.cds-body-primary {
+  font-family: var(--cds-font-family);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+}
+.cds-body-secondary {
+  font-family: var(--cds-font-family);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+}
+.cds-body-tertiary {
+  font-family: var(--cds-font-family);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+}
+
+/* Action */
+.cds-action-primary {
+  font-family: var(--cds-font-family);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+.cds-action-secondary {
+  font-family: var(--cds-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+/* Responsive typography: below md breakpoint, titles/display use smaller variants */
+@media (max-width: 1023.95px) {
+  .cds-display { font-size: 2.5rem; line-height: 2.75rem; }
+  .cds-title-lg { font-size: 2rem; line-height: 2.5rem; }
+  .cds-title-md { font-size: 1.75rem; line-height: 2.25rem; }
+  .cds-title-sm { font-size: 1.5rem; line-height: 1.875rem; }
+  .cds-title-xs { font-size: 1.25rem; line-height: 1.5rem; }
+}
+
+
+/* ==========================================================================
+   FOCUS RING
+   CDS uses a two-color focus ring: purple-700 outer + blue-25 invert.
+   Use: class="cds-focus-ring" on any interactive element.
+   ========================================================================== */
+
+.cds-focus-ring:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 4px var(--cds-color-purple-700);
+}
+
+
+/* ==========================================================================
+   Z-INDEX UTILITIES
+   Use: z-modal, z-drawer, z-tooltip, etc.
+   ========================================================================== */
+
+.z-mobile-stepper { z-index: 1000; }
+.z-speed-dial { z-index: 2000; }
+.z-app-bar { z-index: 3000; }
+.z-drawer { z-index: 4000; }
+.z-modal { z-index: 10000; }
+.z-snackbar { z-index: 10100; }
+.z-tooltip { z-index: 11000; }
+
+
+/* ==========================================================================
+   DURATION UTILITIES
+   Use: duration-fast, duration-normal, duration-slow
+   ========================================================================== */
+
+.duration-instant { transition-duration: 0ms; }
+.duration-fast { transition-duration: 150ms; }
+.duration-normal { transition-duration: 225ms; }
+.duration-slow { transition-duration: 500ms; }
