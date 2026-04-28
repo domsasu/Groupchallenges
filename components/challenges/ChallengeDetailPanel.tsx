@@ -154,16 +154,6 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
 
   return (
     <div className="space-y-5">
-      {!isCompleted && (
-        <div>
-          <h4 className="cds-subtitle-sm text-[var(--cds-color-grey-975)]">Challenge tips</h4>
-          <ul className="mt-2 list-disc space-y-1 pl-5 cds-body-secondary text-[var(--cds-color-grey-700)]">
-            {challenge.steps.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {isCompleted && challenge.outcome && (
         <div
