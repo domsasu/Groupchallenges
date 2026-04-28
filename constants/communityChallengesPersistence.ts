@@ -87,11 +87,17 @@ export function mergeCommunityChallengesWithStorage(base: CommunityChallenge[]):
   const joinDone = readJoinFlowCompleted();
   return base.map((c) => {
     if (c.id === VIBE_CHALLENGE_ID) {
+      const o = overrides[c.id];
+      // An explicit leave (optedIn: false) always wins, even if join-flow key was cleared.
+      if (o?.optedIn === false) {
+        return { ...c, ...o, optedIn: false };
+      }
       const completed = joinDone[VIBE_CHALLENGE_ID] === true;
       if (!completed) {
+        // User never joined via flow — return mock default without override.
         return { ...c };
       }
-      const o = overrides[c.id];
+      // Joined via flow and no explicit leave — show as joined, apply any other overrides.
       return {
         ...c,
         ...(o ?? {}),

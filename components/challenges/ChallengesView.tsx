@@ -127,24 +127,28 @@ export const ChallengesView: React.FC = () => {
   }, []);
 
   const toggleOptedIn = useCallback((id: string) => {
-    setChallenges((prev) =>
-      prev.map((c) => {
+    setChallenges((prev) => {
+      const next = prev.map((c) => {
         if (c.id !== id) return c;
-        const next = !c.optedIn;
-        if (!next && id === VIBE_CHALLENGE_ID) {
+        const joining = !c.optedIn;
+        if (!joining && id === VIBE_CHALLENGE_ID) {
           clearChallengeJoinedViaFlow(VIBE_CHALLENGE_ID);
         }
         return {
           ...c,
-          optedIn: next,
-          learnerContributionProgress: next
+          optedIn: joining,
+          learnerContributionProgress: joining
             ? c.learnerContributionProgress == null
               ? 0
               : c.learnerContributionProgress
             : undefined,
         };
-      })
-    );
+      });
+      // Persist immediately (don't wait for useEffect) so navigating away right after
+      // leaving still writes optedIn:false before the component unmounts.
+      persistChallengesFromMock(next);
+      return next;
+    });
   }, []);
 
   const [joinFlowChallengeId, setJoinFlowChallengeId] = useState<string | null>(null);
