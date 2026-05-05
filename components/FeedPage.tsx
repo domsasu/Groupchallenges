@@ -14,6 +14,7 @@ import { FeedDiscoverRail } from './feed/FeedDiscoverRail';
 import { FeedTimeline } from './feed/FeedTimeline';
 import { Icons } from './Icons';
 import { enrichFeedVideoThumbnails } from '../services/unsplashThumbnails';
+import { CommunityCohortMembershipProvider } from '../context/CommunityCohortMembershipContext';
 import { ChallengesView } from './challenges/ChallengesView';
 
 export type CommunitySurface = 'feed' | 'challenges';
@@ -93,18 +94,20 @@ export const FeedPage: React.FC<FeedPageProps> = ({ initialSelectedCohortId, ini
   const timelineItems = feedItemsWithThumbs ?? feedItems;
 
   return (
-    <div className="flex-1 bg-[var(--cds-color-grey-25)] overflow-y-auto custom-scrollbar">
-      <div
-        className={`relative bg-[var(--cds-color-grey-25)] min-h-[min(100%,calc(100vh-5rem))] ${surface.feedBackdropExtraClassName}`}
-        data-site-variant={variant}
-      >
-        {/* Full-bleed white bar so no grey shows at viewport edges; tab labels align with page column below. */}
-        <div className="relative z-0 mx-auto max-w-[1440px] px-4 pb-4 md:px-6 md:pb-5 pt-6">
-          <div className="relative z-0">
-            <ChallengesView />
+    <CommunityCohortMembershipProvider>
+      <div className="flex-1 bg-[var(--cds-color-grey-25)] overflow-y-auto custom-scrollbar">
+        <div
+          className={`relative bg-[var(--cds-color-grey-25)] min-h-[min(100%,calc(100vh-5rem))] ${surface.feedBackdropExtraClassName}`}
+          data-site-variant={variant}
+        >
+          {/* Full-bleed white bar so no grey shows at viewport edges; tab labels align with page column below. */}
+          <div className="relative z-0 mx-auto max-w-[1440px] px-4 pb-4 md:px-6 md:pb-5 pt-6">
+            <div className="relative z-0">
+              <ChallengesView />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </CommunityCohortMembershipProvider>
   );
 };

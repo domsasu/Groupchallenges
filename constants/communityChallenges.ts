@@ -1,8 +1,12 @@
 import { JOINED_FEED_COHORT_IDS, type FeedCohortId } from './feedCohorts';
+import type {
+  ChallengeDurationBucket,
+  ChallengeMetric,
+  ChallengeParticipationMode,
+} from './challengeTaxonomy';
 
 /**
- * Mock challenges use only cohorts the learner has joined — same set/order as
- * `JOINED_FEED_COHORT_IDS` in feedCohorts (Working parents, Coursera community, AI & data).
+ * Mock challenges include joined-cohort rows plus discover-only cohorts for Browse filters.
  */
 
 export type ChallengeLifecycle = 'active' | 'upcoming' | 'completed';
@@ -32,6 +36,12 @@ export interface CommunityChallenge {
   id: string;
   name: string;
   cohortId: FeedCohortId;
+  /** How progress competes or aggregates across the cohort. */
+  participationMode: ChallengeParticipationMode;
+  /** What kind of learning signal the challenge measures. */
+  challengeMetric: ChallengeMetric;
+  /** Coarse window for filters (independent of exact ISO dates). */
+  durationBucket: ChallengeDurationBucket;
   lifecycle: ChallengeLifecycle;
   /** 1-based */
   groupIndex: number;
@@ -96,6 +106,9 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     id: 'ch-active-workingparents-nap-module',
     name: 'Nap time, grind time',
     cohortId: 'workingparents',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'quantity',
+    durationBucket: 'month',
     lifecycle: 'active',
     groupIndex: 3,
     groupCount: 5,
@@ -151,6 +164,9 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     id: 'ch-active-ai-vibe-coding',
     name: "It's a Vibe",
     cohortId: 'ai',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'time',
+    durationBucket: 'month',
     lifecycle: 'active',
     groupIndex: 2,
     groupCount: 4,
@@ -195,6 +211,9 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     id: 'ch-upcoming-enrolled-streak',
     name: '14-Day Consistency Streak',
     cohortId: 'enrolled',
+    participationMode: 'individual',
+    challengeMetric: 'consistency',
+    durationBucket: 'month',
     lifecycle: 'upcoming',
     groupIndex: 2,
     groupCount: 6,
@@ -227,6 +246,9 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     id: 'ch-upcoming-ai-gab-lab-500',
     name: 'Prompt runners unite!',
     cohortId: 'ai',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'time',
+    durationBucket: 'month',
     lifecycle: 'upcoming',
     groupIndex: 1,
     groupCount: 4,
@@ -262,6 +284,9 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     id: 'ch-completed-enrolled-relay',
     name: 'Deep learning challenge',
     cohortId: 'ai',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'depth',
+    durationBucket: 'month',
     lifecycle: 'completed',
     groupIndex: 6,
     groupCount: 6,
@@ -301,6 +326,141 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
       { id: 'u4', displayName: 'Sam Okonkwo', contribution: 275, highFiveCount: 7, isCurrentUser: false },
       { id: 'u5', displayName: 'Zoe Martin', contribution: 260, highFiveCount: 5, isCurrentUser: false },
     ],
+  },
+  {
+    id: 'ch-upcoming-design-systems-breadth',
+    name: 'Design systems crawl',
+    cohortId: 'design',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'breadth',
+    durationBucket: 'month',
+    lifecycle: 'upcoming',
+    groupIndex: 1,
+    groupCount: 6,
+    groupPlace: 3,
+    approxGroupSize: 118,
+    whyJoin:
+      'Explore five distinct product-design domains as a squad—tokens, research ops, prototyping, accessibility, and critique—without competing across cohorts.',
+    milestones: [
+      { id: 'd1', label: 'Foundations', target: '1 domain' },
+      { id: 'd2', label: 'Midpoint', target: '3 domains' },
+      { id: 'd3', label: 'Breadth', target: '5 domains' },
+    ],
+    steps: [
+      'Each member picks a domain to “own” for a week and shares a 5-minute recap.',
+      'Rotate ownership so everyone touches at least two domains.',
+      'Capstone: one combined Figma library audit submitted as a group.',
+    ],
+    startsAt: '2026-05-25',
+    endsAt: '2026-06-24',
+    optedIn: false,
+    currentTierIndex: 0,
+    groupsAtMilestoneTier: [[1, 2, 3, 4, 5, 6], [], []],
+    visualTier: 'silver',
+    cardProgress: 0,
+  },
+  {
+    id: 'ch-upcoming-startups-capstone-collective',
+    name: 'Capstone relay',
+    cohortId: 'startups',
+    participationMode: 'cohort_collective',
+    challengeMetric: 'depth',
+    durationBucket: 'quarter',
+    lifecycle: 'upcoming',
+    groupIndex: 1,
+    groupCount: 1,
+    groupPlace: 1,
+    approxGroupSize: 4200,
+    whyJoin:
+      'One cohort-wide meter: collectively finish three startup-relevant certificates this quarter—no squads racing each other.',
+    milestones: [
+      { id: 's1', label: 'First cert', target: '1 certificate' },
+      { id: 's2', label: 'Momentum', target: '2 certificates' },
+      { id: 's3', label: 'Quarter close', target: '3 certificates' },
+    ],
+    steps: [
+      'Pick certificates that map to your venture thesis; every completion adds to the shared tally.',
+      'Post proof links in the cohort channel so moderators can verify.',
+      'Optional office hours: twice a month for blockers.',
+    ],
+    startsAt: '2026-06-01',
+    endsAt: '2026-08-31',
+    optedIn: false,
+    currentTierIndex: 0,
+    groupsAtMilestoneTier: [[1], [], []],
+    visualTier: 'gold',
+    cardProgress: 0,
+  },
+  {
+    id: 'ch-upcoming-engineering-quiz-mastery',
+    name: 'Systems quiz sprint',
+    cohortId: 'engineering',
+    participationMode: 'inner_cohort',
+    challengeMetric: 'mastery',
+    durationBucket: 'week',
+    lifecycle: 'upcoming',
+    groupIndex: 2,
+    groupCount: 5,
+    groupPlace: 2,
+    approxGroupSize: 142,
+    whyJoin:
+      'Short window: squads inside #Engineering compete on weekly quiz averages—highest mean score wins bragging rights.',
+    milestones: [
+      { id: 'q1', label: 'Warm-up', target: '70% avg' },
+      { id: 'q2', label: 'Final', target: '90% avg' },
+    ],
+    steps: [
+      'Each group nominates a quiz captain to schedule two practice sessions.',
+      'Everyone completes the same timed quiz set; lowest score is dropped from the average.',
+      'Tie-breaker: fastest median completion time.',
+    ],
+    startsAt: '2026-05-12',
+    endsAt: '2026-05-19',
+    optedIn: false,
+    currentTierIndex: 0,
+    groupsAtMilestoneTier: [
+      [1, 3, 4, 5],
+      [2],
+    ],
+    visualTier: 'platinum',
+    cardProgress: 0.08,
+  },
+  {
+    id: 'ch-completed-marketing-breadth',
+    name: 'Channel mix explorer',
+    cohortId: 'marketing',
+    participationMode: 'individual',
+    challengeMetric: 'breadth',
+    durationBucket: 'quarter',
+    lifecycle: 'completed',
+    groupIndex: 1,
+    groupCount: 12,
+    groupPlace: 5,
+    approxGroupSize: 198,
+    whyJoin:
+      'Individual leaderboard: learners logged touchpoints across paid, organic, lifecycle, and partner channels.',
+    milestones: [
+      { id: 'mk1', label: 'Bronze', target: '4 channels' },
+      { id: 'mk2', label: 'Silver', target: '8 channels' },
+    ],
+    steps: [
+      'Document one real campaign touchpoint per channel with a screenshot.',
+      'Peer-review two other learners’ channel maps.',
+      'Publish a one-page “mix diagnosis” for a brand you admire.',
+    ],
+    startsAt: '2026-01-05',
+    endsAt: '2026-03-28',
+    optedIn: false,
+    outcome: {
+      won: false,
+      userRank: 14,
+      shareoutPeerCount: 210,
+      awardLabel: 'Top breadth',
+    },
+    currentTierIndex: 1,
+    groupsAtMilestoneTier: [[], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]],
+    visualTier: 'silver',
+    cardProgress: 1,
   },
 ];
 
@@ -581,10 +741,28 @@ export function challengesForLifecycle(
   return list.filter((x) => x.lifecycle === lifecycle);
 }
 
+/**
+ * Active challenges ranked for promo tiles — cohort scale weighted slightly by engagement on the goal bar.
+ */
+export function popularOngoingChallenges(list: CommunityChallenge[], limit = 3): CommunityChallenge[] {
+  const active = list.filter((c) => c.lifecycle === 'active');
+  const score = (c: CommunityChallenge) =>
+    c.approxGroupSize * (1 + 0.4 * Math.min(1, Math.max(0, c.cardProgress)));
+  return [...active].sort((a, b) => score(b) - score(a)).slice(0, limit);
+}
+
 /** Same cohort order as My Cohorts / Feed discover rail (`JOINED_FEED_COHORT_IDS`). */
 export function sortChallengesByJoinedCohortOrder(challenges: CommunityChallenge[]): CommunityChallenge[] {
+  return sortChallengesByCohortMembershipOrder(challenges, JOINED_FEED_COHORT_IDS);
+}
+
+/** Order by learner’s cohort list (joined defaults + any discover joins). */
+export function sortChallengesByCohortMembershipOrder(
+  challenges: CommunityChallenge[],
+  joinedCohortIds: readonly FeedCohortId[]
+): CommunityChallenge[] {
   const rank = (cohortId: FeedCohortId) => {
-    const i = JOINED_FEED_COHORT_IDS.indexOf(cohortId);
+    const i = joinedCohortIds.indexOf(cohortId);
     return i === -1 ? 999 : i;
   };
   return [...challenges].sort((a, b) => {
@@ -595,23 +773,23 @@ export function sortChallengesByJoinedCohortOrder(challenges: CommunityChallenge
 }
 
 /**
- * Community → Challenges strip order. Upcoming tab puts **AI & data** first, then working parents,
- * then Coursera community (so e.g. AI cohort challenge appears before the 14-day streak). Other tabs use join order.
+ * Community → Challenges Browse tab: cohorts listed first in the strip (then other joined, then discover).
  */
-const UPCOMING_STRIP_COHORT_PRIORITY: FeedCohortId[] = ['ai', 'workingparents', 'enrolled'];
+export const UPCOMING_STRIP_COHORT_PRIORITY: FeedCohortId[] = ['ai', 'workingparents', 'enrolled'];
 
 export function sortChallengesForChallengesView(
   challenges: CommunityChallenge[],
-  lifecycle: ChallengeLifecycle
+  lifecycle: ChallengeLifecycle,
+  joinedCohortIds: readonly FeedCohortId[] = JOINED_FEED_COHORT_IDS
 ): CommunityChallenge[] {
   const list = challengesForLifecycle(challenges, lifecycle);
   if (lifecycle !== 'upcoming') {
-    return sortChallengesByJoinedCohortOrder(list);
+    return sortChallengesByCohortMembershipOrder(list, joinedCohortIds);
   }
   const priority = (cohortId: FeedCohortId) => {
     const i = UPCOMING_STRIP_COHORT_PRIORITY.indexOf(cohortId);
     if (i !== -1) return i;
-    const j = JOINED_FEED_COHORT_IDS.indexOf(cohortId);
+    const j = joinedCohortIds.indexOf(cohortId);
     return 10 + (j === -1 ? 999 : j);
   };
   return [...list].sort((a, b) => {

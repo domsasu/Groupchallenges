@@ -1303,3 +1303,80 @@ input, button, textarea, select {
 .animate-feed-like-icon-pop {
   animation: feed-like-icon-pop 0.48s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
 }
+
+/* Challenge discovery bucket tabs — icon motion when tab is selected */
+@keyframes challenge-compass-needle-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes challenge-zap-flicker {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  12% {
+    opacity: 0.45;
+    filter: brightness(1.45);
+  }
+  24% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  40% {
+    opacity: 0.35;
+    filter: brightness(1.65);
+  }
+  55% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  70% {
+    opacity: 0.5;
+    filter: brightness(1.4);
+  }
+}
+
+@keyframes challenge-award-ribbon-inflate {
+  0%,
+  12%,
+  100% {
+    transform: scale(1);
+  }
+  6% {
+    transform: scale(1.14);
+  }
+}
+
+.challenge-tab-icon-compass-selected path:first-of-type {
+  transform-origin: 12px 12px;
+  animation: challenge-compass-needle-spin 28s linear infinite;
+}
+
+.challenge-tab-icon-zap-selected {
+  animation: challenge-zap-flicker 2.4s ease-in-out infinite;
+}
+
+.challenge-tab-icon-award-selected circle {
+  transform-origin: 12px 8px;
+  animation: challenge-award-ribbon-inflate 3s ease-in-out infinite;
+}
+
+.challenge-tab-icon-award-selected path {
+  transform-origin: 12px 11px;
+  animation: challenge-award-ribbon-inflate 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-tab-icon-compass-selected path:first-of-type,
+  .challenge-tab-icon-zap-selected,
+  .challenge-tab-icon-award-selected circle,
+  .challenge-tab-icon-award-selected path {
+    animation: none !important;
+  }
+}

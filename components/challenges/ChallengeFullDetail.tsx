@@ -8,24 +8,23 @@ import {
   parseChallengeGoalTotalUnits,
   parseMilestoneNumericCaps,
   resolveGroupsAtTierColumns,
-  tierColumnIndexForCompletedUnits,
 } from '../../constants/communityChallenges';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
+import {
+  CHALLENGE_METRIC_LABELS,
+  DURATION_BUCKET_LABELS,
+  PARTICIPATION_MODE_LABELS,
+} from '../../constants/challengeTaxonomy';
+import {
+  CHALLENGE_METRIC_ICONS,
+  DURATION_BUCKET_ICONS,
+  PARTICIPATION_MODE_ICONS,
+} from '../../constants/challengePillIcons';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 import { Icons } from '../Icons';
 import { ChallengeDetailPanel } from './ChallengeDetailPanel';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
-
-function resolveTierIndexForCard(challenge: CommunityChallenge): number {
-  const n = challenge.milestones.length;
-  if (n === 0) return 0;
-  if (challenge.currentTierIndex !== undefined) {
-    return Math.min(Math.max(0, challenge.currentTierIndex), n - 1);
-  }
-  if (challenge.lifecycle === 'completed') return n - 1;
-  return 0;
-}
 
 /** Extract the unit word from a milestone target string, e.g. "100 hrs" → "hrs". */
 function extractUnitLabel(target: string | undefined): string {
@@ -458,6 +457,8 @@ function UnjoinedGoalPreview({ challenge }: { challenge: CommunityChallenge }) {
 export interface ChallengeFullDetailProps {
   challenge: CommunityChallenge;
   optedIn: boolean;
+  /** When false, join CTA also adds the learner to the challenge cohort (handled by parent). */
+  userInCohort: boolean;
   onToggleOptIn: () => void;
   onRequestJoinChallenge?: () => void;
   onOpenShareout?: () => void;
@@ -468,6 +469,7 @@ export interface ChallengeFullDetailProps {
 export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   challenge,
   optedIn,
+  userInCohort,
   onToggleOptIn,
   onRequestJoinChallenge,
   onOpenShareout,
@@ -491,24 +493,14 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
     goalTotal != null && progress01ForGoal != null
       ? Math.round(Math.min(1, Math.max(0, progress01ForGoal)) * goalTotal)
       : null;
-  const useModuleConnectorModel =
-    learnerUnitsCompleted != null &&
-    milestoneCaps.length === challenge.milestones.length &&
-    milestoneCaps.length >= 2;
-
-  const tierIdx = useModuleConnectorModel
-    ? tierColumnIndexForCompletedUnits(learnerUnitsCompleted, milestoneCaps)
-    : resolveTierIndexForCard(challenge);
-
   const learnerGroupSquad = groupSquadForChallenge(challenge, challenge.groupIndex);
   const joinChallenge = onRequestJoinChallenge ?? onToggleOptIn;
-
-  const lifecyclePillClass =
-    challenge.lifecycle === 'active'
-      ? 'bg-emerald-500/90 text-white'
-      : challenge.lifecycle === 'upcoming'
-        ? 'bg-amber-500/90 text-white'
-        : 'bg-white/20 text-white backdrop-blur-sm';
+  const cohortMeta = FEED_COHORT_META[challenge.cohortId];
+  const showJoinCta = (isActive && !optedIn) || (isUpcoming && !optedIn);
+  const joinPrimaryLabel =
+    !userInCohort && showJoinCta
+      ? `Join ${cohortMeta.pillLabel} & challenge`
+      : 'Join challenge';
 
   const outcomeAwardLabel = challenge.outcome
     ? (challenge.outcome.awardLabel ?? 'Longest Streak').replace(/\.\s*$/, '')
@@ -516,30 +508,50 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   const outcomeCourseCount = challenge.outcome?.completedCourseCount;
   const outcomeHasCourseStat = outcomeCourseCount != null && outcomeCourseCount > 0;
 
+  const ParticipationIcon = PARTICIPATION_MODE_ICONS[challenge.participationMode];
+  const MetricIcon = CHALLENGE_METRIC_ICONS[challenge.challengeMetric];
+  const DurationIcon = DURATION_BUCKET_ICONS[challenge.durationBucket];
+
   return (
     <div className="overflow-visible rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[var(--cds-elevation-level1)]">
 
-      {/* ── Dark hero header ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-t-2xl bg-[#141518] px-4 pb-4 pt-4">
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-[#141518] via-[#141518]/80 to-transparent"
-          aria-hidden
-        />
-        <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1 flex flex-col gap-3">
-            <div className="flex flex-wrap items-start gap-2">
-              <span
-                className={`line-clamp-2 max-w-[min(100%,14rem)] rounded-lg px-2.5 py-1 text-xs font-semibold leading-snug ${lifecyclePillClass}`}
-              >
+      {/* ── Header ────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-t-2xl border-b border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 pb-4 pt-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="line-clamp-2 max-w-[min(100%,14rem)] rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-semibold leading-snug text-sky-950">
                 {formatChallengeCardHeroLabel(challenge)}
               </span>
+              <span className="rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-2 py-0.5 text-[11px] font-medium text-[var(--cds-color-grey-800)]">
+                {cohortMeta.pillLabel}
+                {userInCohort ? ' · member' : ' · not joined'}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
+                <ParticipationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+                {PARTICIPATION_MODE_LABELS[challenge.participationMode]}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
+                <MetricIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+                {CHALLENGE_METRIC_LABELS[challenge.challengeMetric]}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
+                <DurationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+                {DURATION_BUCKET_LABELS[challenge.durationBucket]}
+              </span>
             </div>
-            <h2 className="text-lg font-semibold leading-snug text-white drop-shadow-sm sm:text-xl">
-              {challenge.name}
-            </h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-white/85 drop-shadow-sm">
-              {challenge.whyJoin}
-            </p>
+            <h2 className="text-lg font-semibold leading-snug text-[var(--cds-color-grey-975)] sm:text-xl">{challenge.name}</h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-[var(--cds-color-grey-700)]">{challenge.whyJoin}</p>
+            {!userInCohort && showJoinCta ? (
+              <div className="rounded-lg border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-3 py-2.5 text-sm text-[var(--cds-color-grey-800)]">
+                <p className="font-medium text-[var(--cds-color-grey-975)]">{cohortMeta.label}</p>
+                <p className="mt-1 text-[var(--cds-color-grey-700)]">{cohortMeta.shortDescription}</p>
+                <p className="mt-1.5 text-xs text-[var(--cds-color-grey-600)]">
+                  {cohortMeta.memberCount.toLocaleString()} members · joining enrolls you in this cohort and opts you into
+                  the challenge.
+                </p>
+              </div>
+            ) : null}
           </div>
           {(isActive && !optedIn) || isUpcoming ? (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
@@ -549,12 +561,12 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                   onClick={joinChallenge}
                   className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
                 >
-                  Join challenge
+                  {joinPrimaryLabel}
                 </button>
               )}
               {isUpcoming && optedIn && (
                 <span
-                  className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-4 py-2 cds-action-secondary text-[var(--cds-color-grey-975)] shadow-sm"
+                  className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-4 py-2 cds-action-secondary text-[var(--cds-color-grey-975)] shadow-sm"
                   role="status"
                 >
                   Joined ✓
@@ -564,9 +576,9 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                 <button
                   type="button"
                   onClick={joinChallenge}
-                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80"
+                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
                 >
-                  Join challenge
+                  {joinPrimaryLabel}
                 </button>
               )}
             </div>
@@ -652,7 +664,6 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
             {/* Milestone leaderboard */}
             <MilestoneLeaderboard
               challenge={challenge}
-              defaultMilestoneIdx={tierIdx + 1}
               optedIn={optedIn}
               milestoneCaps={milestoneCaps}
               learnerUnitsCompleted={learnerUnitsCompleted}

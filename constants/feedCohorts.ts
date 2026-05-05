@@ -72,7 +72,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   healthcare: {
     id: 'healthcare',
     label: 'Healthcare',
-    pillLabel: 'Healthcare',
+    pillLabel: '#healthcare',
     memberCount: 89400,
     shortDescription:
       'Clinical data, public health, and healthcare analytics learning communities.',
@@ -81,7 +81,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   engineering: {
     id: 'engineering',
     label: 'Engineering',
-    pillLabel: 'Engineering',
+    pillLabel: '#engineering',
     memberCount: 210000,
     shortDescription: 'Software, systems, and tech career learners pooling course clips.',
     joinedByDefault: false,
@@ -89,7 +89,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   business: {
     id: 'business',
     label: 'Business',
-    pillLabel: 'Business',
+    pillLabel: '#business',
     memberCount: 156000,
     shortDescription: 'MBA skills, strategy, and operations—feed from related certificates.',
     joinedByDefault: false,
@@ -97,7 +97,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   marketing: {
     id: 'marketing',
     label: 'Marketing',
-    pillLabel: 'Marketing',
+    pillLabel: '#marketing',
     memberCount: 98500,
     shortDescription: 'Growth, brand, and digital marketing cohort content.',
     joinedByDefault: false,
@@ -105,7 +105,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   finance: {
     id: 'finance',
     label: 'Finance',
-    pillLabel: 'Finance',
+    pillLabel: '#finance',
     memberCount: 72300,
     shortDescription: 'Accounting, FP&A, and investing programs in one stream.',
     joinedByDefault: false,
@@ -114,7 +114,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   education: {
     id: 'education',
     label: 'Education',
-    pillLabel: 'Education',
+    pillLabel: '#education',
     memberCount: 54200,
     shortDescription: 'Teaching, learning design, and EdTech specializations.',
     joinedByDefault: false,
@@ -122,7 +122,7 @@ export const FEED_COHORT_META: Record<FeedCohortId, FeedCohortMeta> = {
   startups: {
     id: 'startups',
     label: 'Startups',
-    pillLabel: 'Startups',
+    pillLabel: '#startups',
     memberCount: 318000,
     shortDescription: 'Founders and early operators sharing startup-relevant courses.',
     joinedByDefault: false,
