@@ -404,8 +404,13 @@ function MilestoneLeaderboard({
 function ChallengeTipsCard({ steps }: { steps: string[] }) {
   if (steps.length === 0) return null;
   return (
-    <div className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] px-4 py-4">
-      <h4 className="cds-subtitle-sm text-[var(--cds-color-grey-975)]">Challenge tips</h4>
+    <div className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 py-4">
+      <h4 className="cds-subtitle-sm flex items-center gap-1.5 text-[var(--cds-color-grey-975)]">
+        <span className="material-symbols-rounded text-[16px] text-[var(--cds-color-amber-700)]" aria-hidden>
+          lightbulb
+        </span>
+        Challenge tips
+      </h4>
       <ul className="mt-2 list-disc space-y-1.5 pl-5 cds-body-secondary text-[var(--cds-color-grey-700)]">
         {steps.map((s, i) => (
           <li key={i}>{s}</li>
@@ -434,7 +439,10 @@ function UnjoinedGoalPreview({
       <div
         className={`flex flex-col gap-4 ${tipsAside ? 'sm:flex-row sm:items-start sm:gap-6' : ''}`}
       >
-        <div className="w-fit shrink-0 inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)]">
+        <div
+          className="w-fit shrink-0 inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)]"
+          style={{ backgroundImage: 'linear-gradient(-61.1deg, rgb(241, 238, 255) 17.86%, rgb(240, 242, 255) 75.22%)' }}
+        >
           <div className="px-4 py-3">
             <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Your goal</p>
             <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
@@ -451,7 +459,7 @@ function UnjoinedGoalPreview({
           </div>
         </div>
         {tipsAside ? (
-          <div className="min-w-0 flex-1 sm:min-w-[12rem] sm:max-w-xl">{tipsAside}</div>
+          <div className="min-w-0 flex-1 sm:min-w-[12rem]">{tipsAside}</div>
         ) : null}
       </div>
 
@@ -701,8 +709,19 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
               </span>
             </div>
 
-            {/* Your goal vs Team goal */}
-            <GoalSummaryCard challenge={challenge} />
+            {/* Your goal vs Team goal + tips (tips sit higher for active joined, same pattern as preview) */}
+            {challenge.steps.length > 0 ? (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                <div className="min-w-0 flex-1">
+                  <GoalSummaryCard challenge={challenge} />
+                </div>
+                <div className="min-w-0 flex-1 sm:min-w-[12rem]">
+                  <ChallengeTipsCard steps={challenge.steps} />
+                </div>
+              </div>
+            ) : (
+              <GoalSummaryCard challenge={challenge} />
+            )}
 
             {/* Milestone leaderboard */}
             <MilestoneLeaderboard
@@ -711,11 +730,6 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
               milestoneCaps={milestoneCaps}
               learnerUnitsCompleted={learnerUnitsCompleted}
             />
-
-            {/* Challenge tips */}
-            {challenge.steps.length > 0 && (
-              <ChallengeTipsCard steps={challenge.steps} />
-            )}
           </>
         )}
 

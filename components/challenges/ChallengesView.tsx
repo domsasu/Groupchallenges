@@ -247,27 +247,28 @@ export const ChallengesView: React.FC = () => {
         aria-label="Challenge details"
       >
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pt-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] custom-scrollbar">
+          <div className="mx-auto w-full max-w-[980px]">
         {selection?.kind === 'challenge' && challengeForDetail && (
-          <ChallengeFullDetail
-            challenge={challengeForDetail}
-            optedIn={challengeForDetail.optedIn}
-            userInCohort={isInCohort(challengeForDetail.cohortId)}
-            onToggleOptIn={() => toggleOptedIn(challengeForDetail.id)}
-            onRequestJoinChallenge={() =>
-              handleRequestJoinChallenge(challengeForDetail.id, challengeForDetail.cohortId)
-            }
-            onResumeLearning={() => {
-              window.alert('Resume learning would open your course (preview).');
-            }}
-            onOpenShareout={
-              challengeForDetail.lifecycle === 'completed' && challengeForDetail.outcome
-                ? () => {
-                    window.alert('Shareout would open here (preview).');
-                  }
-                : undefined
-            }
-          />
-        )}
+            <ChallengeFullDetail
+              challenge={challengeForDetail}
+              optedIn={challengeForDetail.optedIn}
+              userInCohort={isInCohort(challengeForDetail.cohortId)}
+              onToggleOptIn={() => toggleOptedIn(challengeForDetail.id)}
+              onRequestJoinChallenge={() =>
+                handleRequestJoinChallenge(challengeForDetail.id, challengeForDetail.cohortId)
+              }
+              onResumeLearning={() => {
+                window.alert('Resume learning would open your course (preview).');
+              }}
+              onOpenShareout={
+                challengeForDetail.lifecycle === 'completed' && challengeForDetail.outcome
+                  ? () => {
+                      window.alert('Shareout would open here (preview).');
+                    }
+                  : undefined
+              }
+            />
+          )}
 
         {selection?.kind === 'suggest' && (
           <div className="overflow-hidden rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[var(--cds-elevation-level1)]">
@@ -305,13 +306,14 @@ export const ChallengesView: React.FC = () => {
           </div>
         )}
 
-        {!selection && (
-          <div className="rounded-2xl border border-dashed border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-6 py-10 text-center">
-            <p className="cds-body-secondary text-[var(--cds-color-grey-600)]">
-              Select a challenge on the left to see details here.
-            </p>
+          {!selection && (
+            <div className="rounded-2xl border border-dashed border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-6 py-10 text-center">
+              <p className="cds-body-secondary text-[var(--cds-color-grey-600)]">
+                Select a challenge on the left to see details here.
+              </p>
+            </div>
+          )}
           </div>
-        )}
         </div>
       </section>
       </div>
