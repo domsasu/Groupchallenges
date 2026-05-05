@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
 import {
   approxHeadcountForGroup,
@@ -7,7 +7,7 @@ import {
   getGroupProgressTowardGoal,
   parseChallengeGoalTotalUnits,
   parseMilestoneNumericCaps,
-  resolveGroupsAtTierColumns,
+  tierColumnIndexForCompletedUnits,
 } from '../../constants/communityChallenges';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import {
@@ -26,6 +26,10 @@ import { Icons } from '../Icons';
 import { ChallengeDetailPanel } from './ChallengeDetailPanel';
 
 // ─── helpers ───────────────────────────────────────────────────────────────
+
+/** Lavender gradient — matches Browse / Active / Completed tabs (`ChallengeDiscoveryFilterBar`, Figma LOHP). */
+const CHALLENGE_BUCKET_CARD_GRADIENT =
+  'linear-gradient(-61.1deg, rgb(241, 238, 255) 17.86%, rgb(240, 242, 255) 75.22%)';
 
 /** Extract the unit word from a milestone target string, e.g. "100 hrs" → "hrs". */
 function extractUnitLabel(target: string | undefined): string {
@@ -48,7 +52,10 @@ function GoalSummaryCard({ challenge }: { challenge: CommunityChallenge }) {
       : 0;
 
   return (
-    <div className="w-fit inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)]">
+    <div
+      className="w-fit inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)]"
+      style={{ backgroundImage: CHALLENGE_BUCKET_CARD_GRADIENT }}
+    >
       <div className="px-4 py-3">
         <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Your goal</p>
         <p className="mt-1 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
@@ -69,342 +76,161 @@ function GoalSummaryCard({ challenge }: { challenge: CommunityChallenge }) {
   );
 }
 
+/** 0–1 progress toward the challenge’s final goal (explicit per-group map when present). */
+function groupProgressTowardFinalGoal(challenge: CommunityChallenge, groupNumber: number): number {
+  const explicit = challenge.groupProgressTowardGoal?.[groupNumber];
+  if (explicit != null) return Math.min(1, Math.max(0, explicit));
+  const layout = challenge.groupsAtMilestoneTier;
+  if (layout) {
+    for (let t = 0; t < layout.length; t++) {
+      if (layout[t]?.includes(groupNumber)) {
+        return getGroupProgressTowardGoal(challenge, groupNumber, t);
+      }
+    }
+  }
+  return 0;
+}
+
 /**
- * Milestone tabs + leaderboard for enrolled learners.
- * Defaults to the tab where the learner's own team sits; all tabs are clickable.
+ * Single leaderboard for active challenges: all squads ranked by overall pace toward the team goal,
+ * with milestone tier and full goal progress columns (same list chrome as the prior milestone panel).
  */
 function MilestoneLeaderboard({
   challenge,
   optedIn,
   milestoneCaps,
-  learnerUnitsCompleted,
 }: {
   challenge: CommunityChallenge;
   optedIn: boolean;
   milestoneCaps: number[];
-  learnerUnitsCompleted: number | null;
 }) {
-  const tierGroupsLayout =
-    resolveGroupsAtTierColumns(challenge) ?? challenge.groupsAtMilestoneTier;
-
-  // Display nodes: prepend a "start" origin node before the real milestones
   const lastTarget = challenge.milestones[challenge.milestones.length - 1]?.target;
   const unitLabel = extractUnitLabel(lastTarget);
-  const displayNodes = [
-    { id: '__start__', label: 'Start', target: `0 ${unitLabel}`.trim(), isStart: true },
-    ...challenge.milestones.map((m) => ({ ...m, isStart: false })),
-  ];
+  const goalTotal = parseChallengeGoalTotalUnits(challenge);
 
-  /**
-   * The display node index the learner has actually completed/reached.
-   * - 0  = still working toward the first milestone (sits on start node)
-   * - k  = learner has crossed the cap of real milestone k (displayNodes[k])
-   * This drives both "You're here" placement and the default selected tab.
-   */
-  const learnerHereDisplayIdx = (() => {
-    if (!optedIn || learnerUnitsCompleted === null) return -1;
-    let idx = 0; // start node — no milestone completed yet
-    for (let k = 0; k < milestoneCaps.length; k++) {
-      if (learnerUnitsCompleted >= milestoneCaps[k]) {
-        idx = k + 1;
-      } else {
-        break;
-      }
+  const allGroupNumbers = Array.from({ length: challenge.groupCount }, (_, i) => i + 1);
+  const sortedGroups = [...allGroupNumbers].sort(
+    (a, b) => groupProgressTowardFinalGoal(challenge, b) - groupProgressTowardFinalGoal(challenge, a)
+  );
+
+  const milestoneSummaryForGroup = (g: number, progress01: number): { title: string; subtitle: string | null } => {
+    if (goalTotal != null && milestoneCaps.length === challenge.milestones.length) {
+      const units = Math.round(Math.min(1, Math.max(0, progress01)) * goalTotal);
+      const col = tierColumnIndexForCompletedUnits(units, milestoneCaps);
+      const m = challenge.milestones[col];
+      if (!m) return { title: '—', subtitle: null };
+      const cap = milestoneCaps[col];
+      return {
+        title: m.label,
+        subtitle: cap != null ? `${cap} ${unitLabel}`.trim() : m.target ?? null,
+      };
     }
-    return idx;
-  })();
-
-  const defaultIdx = learnerHereDisplayIdx >= 0 ? learnerHereDisplayIdx : 0;
-  const [selectedIdx, setSelectedIdx] = useState(defaultIdx);
-
-  useEffect(() => {
-    setSelectedIdx(defaultIdx);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [challenge.id, defaultIdx]);
-
-  /**
-   * Bucket mapping — display node i directly maps to tierGroupsLayout[i]:
-   *   start node (i=0) → bucket 0 = groups working toward the first milestone
-   *   25 hrs node (i=1) → bucket 1 = groups that have passed 25 hrs
-   *   etc.
-   * This means the 25 hrs badge shows how many teams have *passed* 25 hrs, not how many are heading there.
-   */
-  const realMilestoneIdx = selectedIdx;
-  const selectedMilestone = challenge.milestones[realMilestoneIdx];
-  const rawGroupsAtMilestone = tierGroupsLayout?.[realMilestoneIdx] ?? [];
-  const sortedGroups = [...rawGroupsAtMilestone].sort((a, b) => {
-    const pa = getGroupProgressTowardGoal(challenge, a, realMilestoneIdx);
-    const pb = getGroupProgressTowardGoal(challenge, b, realMilestoneIdx);
-    return pb - pa;
-  });
-
-  /**
-   * Fill % for the connector drawn before display node `i` (i >= 1).
-   * Only reflects the enrolled learner's group progress — grey for spectators.
-   * lo = cap[i-2] (or 0 for i=1), hi = cap[i-1].
-   */
-  const connectorFill = (i: number): number => {
-    if (!optedIn || learnerUnitsCompleted === null || milestoneCaps.length < i) return 0;
-    const lo = i === 1 ? 0 : (milestoneCaps[i - 2] ?? 0);
-    const hi = milestoneCaps[i - 1] ?? 0;
-    if (hi <= lo) return 0;
-    const u = learnerUnitsCompleted;
-    if (u <= lo) return 0;
-    if (u >= hi) return 100;
-    return ((u - lo) / (hi - lo)) * 100;
+    return { title: '—', subtitle: null };
   };
 
-  const leaderboardTitle =
-    sortedGroups.length > 0
-      ? `Teams working toward ${selectedMilestone?.target ?? selectedMilestone?.label}`
-      : `No teams at ${selectedMilestone?.target ?? selectedMilestone?.label} yet`;
+  const goalProgressLine = (progress01: number): string => {
+    if (goalTotal != null && unitLabel) {
+      const u = Math.round(Math.min(1, Math.max(0, progress01)) * goalTotal);
+      return `${u} / ${goalTotal} ${unitLabel}`;
+    }
+    return (
+      formatProgressGoalQuantityLineForFraction(challenge, progress01) ?? `${Math.round(progress01 * 100)}%`
+    );
+  };
 
   return (
     <div className="space-y-3">
-      {/* ── Leaderboard panel (milestone track lives in the header) ── */}
-      <div
-        className="overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)]"
-      >
-        {/* Panel header: milestone track */}
-        <div className="border-b border-[var(--cds-color-grey-100)] px-5 pt-5 pb-4">
-          <div
-            className="overflow-x-auto"
-            role="tablist"
-            aria-label="Milestone levels"
-          >
-            <div className="relative flex min-w-max items-center">
-              {displayNodes.map((m, i) => {
-                const isSelected = i === selectedIdx;
-                // "You're here" = the highest node the learner has actually completed.
-                // If no milestone reached yet (e.g. 5 / 25 hrs), this is the start node (i=0).
-                const isLearnerHere = optedIn && learnerHereDisplayIdx === i;
-                // A real milestone node (i >= 1) is "past" if learner has cleared its cap
-                const isPastLearner =
-                  optedIn &&
-                  !m.isStart &&
-                  milestoneCaps.length >= i &&
-                  learnerUnitsCompleted !== null &&
-                  learnerUnitsCompleted >= (milestoneCaps[i - 1] ?? Infinity);
-                // Team count only applies to real milestone nodes
-                // Node i → bucket i: start(0)=teams heading to milestone 1, 25hrs(1)=teams past 25hrs, etc.
-                const teamsHere = tierGroupsLayout?.[i]?.length ?? 0;
-                const fillPct = connectorFill(i);
-
-                return (
-                  <React.Fragment key={m.id}>
-                    {/* Connector segment before this node */}
-                    {i > 0 && (
-                      <div className="relative h-[2px] flex-1 min-w-[40px] bg-[var(--cds-color-grey-200)]">
-                        <div
-                          className="absolute inset-y-0 left-0 rounded-full bg-[var(--cds-color-blue-700)] transition-all duration-500"
-                          style={{ width: `${fillPct}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {m.isStart ? (
-                      /* ── Start origin node (clickable so users can return to the first bucket) ── */
-                      <button
-                        role="tab"
-                        aria-selected={isSelected}
-                        onClick={() => setSelectedIdx(i)}
-                        className="relative flex flex-col items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--cds-color-blue-700)]"
-                      >
-                        <span
-                          className={`mb-2 text-[13px] font-bold tabular-nums leading-tight transition-colors ${
-                            isSelected
-                              ? 'text-[var(--cds-color-blue-700)]'
-                              : 'text-[var(--cds-color-grey-400)]'
-                          }`}
-                        >
-                          {m.target}
-                        </span>
-                        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                          isSelected
-                            ? 'border-[var(--cds-color-blue-700)] bg-[var(--cds-color-blue-700)]'
-                            : 'border-[var(--cds-color-grey-300)] bg-[var(--cds-color-white)]'
-                        }`}>
-                          <span className={`text-[13px] font-bold tabular-nums ${isSelected ? 'text-white' : 'text-[var(--cds-color-grey-600)]'}`}>
-                            0
-                          </span>
-                        </div>
-                        <span
-                          className={`mt-2 text-[10px] leading-snug transition-colors ${
-                            isSelected
-                              ? 'font-semibold text-[var(--cds-color-blue-700)]'
-                              : 'text-[var(--cds-color-grey-400)]'
-                          }`}
-                        >
-                          {m.label}
-                        </span>
-                        {/* "You're here" on start when learner hasn't cleared any milestone yet */}
-                        {isLearnerHere && (
-                          <span className="mt-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold leading-none text-emerald-800">
-                            You&apos;re here
-                          </span>
-                        )}
-                      </button>
-                    ) : (
-                      /* ── Real milestone node (clickable tab) ── */
-                      <button
-                        role="tab"
-                        aria-selected={isSelected}
-                        onClick={() => setSelectedIdx(i)}
-                        className="relative flex flex-col items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--cds-color-blue-700)]"
-                      >
-                        {/* Target label above node */}
-                        <span
-                          className={`mb-2 text-[13px] font-bold tabular-nums leading-tight transition-colors ${
-                            isSelected
-                              ? 'text-[var(--cds-color-blue-700)]'
-                              : isPastLearner
-                                ? 'text-[var(--cds-color-grey-600)]'
-                                : 'text-[var(--cds-color-grey-975)]'
-                          }`}
-                        >
-                          {m.target ?? m.label}
-                        </span>
-
-                        {/* Circle node:
-                              - completed (isPastLearner): solid blue fill + check icon
-                              - not yet reached (selected or not): identical grey outline + grey number */}
-                        <div
-                          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                            isPastLearner
-                              ? 'border-[var(--cds-color-blue-700)] bg-[var(--cds-color-blue-700)]'
-                              : 'border-[var(--cds-color-grey-300)] bg-[var(--cds-color-white)]'
-                          }`}
-                        >
-                          {isPastLearner ? (
-                            <span className="material-symbols-rounded text-[22px] text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
-                              check
-                            </span>
-                          ) : (
-                            <span className="text-[13px] font-bold tabular-nums text-[var(--cds-color-grey-600)]">
-                              {i}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Milestone name below node */}
-                        <span
-                          className={`mt-2 text-[10px] leading-snug transition-colors ${
-                            isSelected
-                              ? 'font-semibold text-[var(--cds-color-blue-700)]'
-                              : 'text-[var(--cds-color-grey-500)]'
-                          }`}
-                        >
-                          {m.label}
-                        </span>
-
-                        {/* Team count */}
-                        <span
-                          className={`mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-none ${
-                            isSelected
-                              ? 'bg-[var(--cds-color-blue-100)] text-[var(--cds-color-blue-800)]'
-                              : 'bg-[var(--cds-color-grey-100)] text-[var(--cds-color-grey-500)]'
-                          }`}
-                        >
-                          {teamsHere} team{teamsHere !== 1 ? 's' : ''}
-                        </span>
-
-                        {/* "You're here" chip */}
-                        {isLearnerHere && (
-                          <span className="mt-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold leading-none text-emerald-800">
-                            You're here
-                          </span>
-                        )}
-                      </button>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </div>
-
+      <div className="overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)]">
+        <div className="px-4 py-3 sm:px-5">
+          <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Team leaderboard</p>
+          <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-600)]">
+            Squads ranked by progress toward the team goal
+            {goalTotal != null && unitLabel ? (
+              <>
+                {' '}
+                ({goalTotal} {unitLabel})
+              </>
+            ) : null}
+            .
+          </p>
         </div>
 
-        {sortedGroups.length === 0 ? (
-          /* Empty state */
-          <div className="px-4 py-6 text-center">
-            <span className="material-symbols-rounded text-[28px] text-[var(--cds-color-grey-300)]">
-              emoji_events
-            </span>
-            <p className="mt-2 cds-body-secondary text-[var(--cds-color-grey-500)]">
-              No teams here yet — be the first to reach this milestone!
-            </p>
-          </div>
-        ) : (
-          /* Ranked team list */
-          <ol>
-            {sortedGroups.map((g, rankIdx) => {
-              const squad = groupSquadForChallenge(challenge, g);
-              const isYours = optedIn && g === challenge.groupIndex;
-              const progress01 = getGroupProgressTowardGoal(challenge, g, realMilestoneIdx);
-              // Show progress toward the selected milestone cap (e.g. "10 / 25 hrs"),
-              // not toward the final team goal (e.g. "10 / 100 hrs").
-              const goalTotal = parseChallengeGoalTotalUnits(challenge);
-              const milestoneCap = milestoneCaps[realMilestoneIdx] ?? null;
-              const absoluteUnits =
-                goalTotal != null ? Math.round(progress01 * goalTotal) : null;
-              const progressLine =
-                absoluteUnits != null && milestoneCap != null && unitLabel
-                  ? `${absoluteUnits} / ${milestoneCap} ${unitLabel}`
-                  : formatProgressGoalQuantityLineForFraction(challenge, progress01) ??
-                    `${Math.round(progress01 * 100)}%`;
-              const headcount = approxHeadcountForGroup(challenge, g);
-              const rank = rankIdx + 1;
+        <div
+          className="hidden items-center gap-3 border-b border-[var(--cds-color-grey-200)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-[var(--cds-color-grey-800)] sm:flex"
+          aria-hidden
+        >
+          <span className="flex w-6 shrink-0 justify-center">#</span>
+          <span className="min-w-0 flex-1">Team</span>
+          <span className="w-[9rem] shrink-0">Next milestone</span>
+          <span className="w-[7.25rem] shrink-0 text-right">Goal progress</span>
+        </div>
 
-              return (
-                <li
-                  key={g}
-                  className={`flex items-center gap-3 px-4 py-3 ${
-                    rankIdx < sortedGroups.length - 1
-                      ? 'border-b border-[var(--cds-color-grey-100)]'
-                      : ''
-                  } ${isYours ? 'bg-[var(--cds-color-grey-25)]' : ''}`}
+        <ol>
+          {sortedGroups.map((g, rankIdx) => {
+            const squad = groupSquadForChallenge(challenge, g);
+            const isYours = optedIn && g === challenge.groupIndex;
+            const progress01 = groupProgressTowardFinalGoal(challenge, g);
+            const { title: milestoneTitle, subtitle: milestoneSubtitle } = milestoneSummaryForGroup(g, progress01);
+            const headcount = approxHeadcountForGroup(challenge, g);
+            const rank = rankIdx + 1;
+
+            return (
+              <li
+                key={g}
+                className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap ${
+                  rankIdx < sortedGroups.length - 1 ? 'border-b border-[var(--cds-color-grey-100)]' : ''
+                } ${isYours ? 'bg-[var(--cds-color-blue-25)]' : ''}`}
+              >
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center text-[11px] font-semibold text-[var(--cds-color-grey-500)]"
+                  aria-label={`Rank ${rank}`}
                 >
-                  {/* Rank number */}
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center text-[11px] font-semibold text-[var(--cds-color-grey-500)]"
-                    aria-label={`Rank ${rank}`}
-                  >
-                    {rank}
-                  </span>
+                  {rank}
+                </span>
 
-                  {/* Squad info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[11px] font-bold leading-tight ${squad.muted}`}
-                      >
-                        {squad.label}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-500)]">
-                      ~{headcount.toLocaleString()} members
-                    </p>
+                <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={`inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[11px] font-bold leading-tight ${squad.muted}`}
+                    >
+                      {squad.label}
+                    </span>
                   </div>
+                  <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-500)]">
+                    ~{headcount.toLocaleString()} members
+                  </p>
+                </div>
 
-                  {/* Progress */}
-                  <span className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-[var(--cds-color-grey-975)]">
-                    {progressLine}
+                <div className="flex w-[calc(50%-0.75rem)] flex-col sm:w-[9rem] sm:shrink-0">
+                  <span className="text-[12px] font-semibold leading-tight text-[var(--cds-color-grey-975)]">
+                    {milestoneTitle}
                   </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
+                  {milestoneSubtitle ? (
+                    <span className="mt-0.5 text-[11px] leading-snug text-[var(--cds-color-grey-600)]">
+                      {milestoneSubtitle}
+                    </span>
+                  ) : null}
+                </div>
+
+                <span className="ml-auto w-[calc(50%-0.75rem)] text-right text-[13px] font-semibold tabular-nums text-[var(--cds-color-grey-975)] sm:ml-0 sm:w-[7.25rem] sm:shrink-0">
+                  {goalProgressLine(progress01)}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </div>
   );
 }
 
 /** Challenge tips card shown in the body (not just the footer). */
-function ChallengeTipsCard({ steps }: { steps: string[] }) {
+function ChallengeTipsCard({ steps, className = '' }: { steps: string[]; className?: string }) {
   if (steps.length === 0) return null;
   return (
-    <div className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 py-4">
+    <div
+      className={`rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 py-4 sm:h-full sm:min-h-0 ${className}`.trim()}
+    >
       <h4 className="cds-subtitle-sm flex items-center gap-1.5 text-[var(--cds-color-grey-975)]">
         <span className="material-symbols-rounded text-[16px] text-[var(--cds-color-amber-700)]" aria-hidden>
           lightbulb
@@ -437,11 +263,11 @@ function UnjoinedGoalPreview({
     <div className="space-y-3">
       {/* Goal summary + optional tips (side-by-side from sm) */}
       <div
-        className={`flex flex-col gap-4 ${tipsAside ? 'sm:flex-row sm:items-start sm:gap-6' : ''}`}
+        className={`flex flex-col gap-4 ${tipsAside ? 'sm:flex-row sm:items-stretch sm:gap-4 md:gap-6' : ''}`}
       >
         <div
-          className="w-fit shrink-0 inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)]"
-          style={{ backgroundImage: 'linear-gradient(-61.1deg, rgb(241, 238, 255) 17.86%, rgb(240, 242, 255) 75.22%)' }}
+          className="w-fit shrink-0 self-start inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)]"
+          style={{ backgroundImage: CHALLENGE_BUCKET_CARD_GRADIENT }}
         >
           <div className="px-4 py-3">
             <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Your goal</p>
@@ -459,7 +285,7 @@ function UnjoinedGoalPreview({
           </div>
         </div>
         {tipsAside ? (
-          <div className="min-w-0 flex-1 sm:min-w-[12rem]">{tipsAside}</div>
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">{tipsAside}</div>
         ) : null}
       </div>
 
@@ -499,6 +325,9 @@ export interface ChallengeFullDetailProps {
   onOpenShareout?: () => void;
   onResumeLearning?: () => void;
   learnerFirstName?: string;
+  /** Secondary control shown on the hero (e.g. dismiss full-screen detail). */
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
@@ -510,24 +339,14 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   onOpenShareout,
   onResumeLearning,
   learnerFirstName = 'Priya',
+  onBack,
+  backLabel = 'Back',
 }) => {
   const isCompleted = challenge.lifecycle === 'completed';
   const isUpcoming = challenge.lifecycle === 'upcoming';
   const isActive = challenge.lifecycle === 'active';
 
-  // ── tier index for learner's group (determines default milestone tab) ──
   const milestoneCaps = parseMilestoneNumericCaps(challenge);
-  const goalTotal = parseChallengeGoalTotalUnits(challenge);
-  const learnerGroupExplicit = challenge.groupProgressTowardGoal?.[challenge.groupIndex];
-  const progress01ForGoal = optedIn
-    ? learnerGroupExplicit != null
-      ? learnerGroupExplicit
-      : challenge.cardProgress
-    : null;
-  const learnerUnitsCompleted =
-    goalTotal != null && progress01ForGoal != null
-      ? Math.round(Math.min(1, Math.max(0, progress01ForGoal)) * goalTotal)
-      : null;
   const learnerGroupSquad = groupSquadForChallenge(challenge, challenge.groupIndex);
   const joinChallenge = onRequestJoinChallenge ?? onToggleOptIn;
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
@@ -552,7 +371,7 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
     <div className="overflow-visible rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[var(--cds-elevation-level1)]">
 
       {/* ── Hero banner + meta pills / CTAs overlay ───────────────── */}
-      <div className="relative w-full overflow-hidden rounded-t-2xl bg-[var(--cds-color-grey-100)] aspect-[21/9] min-h-[95px] max-h-[255px]">
+      <div className="relative aspect-[21/9] max-h-[min(200px,32svh)] min-h-[88px] w-full overflow-hidden rounded-t-2xl bg-[var(--cds-color-grey-100)]">
         <img
           src={detailHeroSrc}
           alt=""
@@ -560,6 +379,20 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
           loading="lazy"
           decoding="async"
         />
+        {onBack ? (
+          <div className="pointer-events-auto absolute left-3 top-3 z-20 sm:left-4 sm:top-4">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/55 bg-black/30 px-3 py-2 text-sm font-semibold text-white shadow-md backdrop-blur-md transition hover:bg-black/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              <span className="material-symbols-rounded text-[20px] leading-none" aria-hidden>
+                arrow_back
+              </span>
+              {backLabel}
+            </button>
+          </div>
+        ) : null}
         <div
           className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.45)_38%,rgba(0,0,0,0.1)_68%,transparent_100%)]"
           aria-hidden
@@ -711,11 +544,11 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
 
             {/* Your goal vs Team goal + tips (tips sit higher for active joined, same pattern as preview) */}
             {challenge.steps.length > 0 ? (
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
-                <div className="min-w-0 flex-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:gap-4 md:gap-6">
+                <div className="shrink-0 self-start">
                   <GoalSummaryCard challenge={challenge} />
                 </div>
-                <div className="min-w-0 flex-1 sm:min-w-[12rem]">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                   <ChallengeTipsCard steps={challenge.steps} />
                 </div>
               </div>
@@ -724,12 +557,7 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
             )}
 
             {/* Milestone leaderboard */}
-            <MilestoneLeaderboard
-              challenge={challenge}
-              optedIn={optedIn}
-              milestoneCaps={milestoneCaps}
-              learnerUnitsCompleted={learnerUnitsCompleted}
-            />
+            <MilestoneLeaderboard challenge={challenge} optedIn={optedIn} milestoneCaps={milestoneCaps} />
           </>
         )}
 

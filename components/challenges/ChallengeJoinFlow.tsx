@@ -5,12 +5,15 @@ import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import { EnrolledCourseMiniCard } from './EnrolledCourseMiniCard';
 import { resolveChallengeMiniCardImageSrc } from '../../constants/challengeMiniCardImage';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
+import { VIBE_CHALLENGE_ID } from '../../constants/communityChallengesPersistence';
 
 export interface ChallengeJoinFlowProps {
   challenge: CommunityChallenge;
   onClose: () => void;
   /** Called with the randomly assigned 1-based group index when the learner finishes the flow. */
   onComplete: (groupIndex: number) => void;
+  /** For generic challenges, recap “Resume” runs after join completes (opens learner’s in-progress course). */
+  onResumeLearning?: () => void;
 }
 
 type Step = 'intro' | 'assign' | 'recap';
@@ -24,7 +27,12 @@ function parseChallengeLocalDate(isoDate: string): Date {
 /**
  * Three-step modal: intro (tier art), animated squad assignment, recap with goal + tips + CTAs.
  */
-export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge, onClose, onComplete }) => {
+export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
+  challenge,
+  onClose,
+  onComplete,
+  onResumeLearning,
+}) => {
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
   const isUpcoming = challenge.lifecycle === 'upcoming';
   const joinHeroSrc = resolveChallengeMiniCardImageSrc(challenge);
@@ -173,6 +181,11 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
     onClose();
   }, [step, targetGroupIndex, finishJoin, onClose]);
 
+  const resumeCurrentCourseAndFinish = useCallback(() => {
+    finishJoin();
+    onResumeLearning?.();
+  }, [finishJoin, onResumeLearning]);
+
   const tips = challenge.steps.slice(0, 3);
   const assignSquad = groupSquadForChallenge(challenge, cycleDisplayIndex);
 
@@ -293,7 +306,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
                 </ul>
               </div>
             )}
-            {challenge.id === 'ch-active-ai-vibe-coding' && (
+            {challenge.id === VIBE_CHALLENGE_ID ? (
               <EnrolledCourseMiniCard
                 callout="You've already started a relevant course"
                 imageSrc={VIBE_ENROLLED_COURSE.imageSrc}
@@ -306,6 +319,23 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
                 onCommitJoin={finishJoin}
                 ctaLabel="Let's go!"
               />
+            ) : (
+              <div className="mt-6 rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] p-4">
+                <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Keep your momentum</p>
+                <p className="mt-1 text-sm text-[var(--cds-color-grey-700)]">
+                  This challenge isn&apos;t tied to a single prescribed course. Resume whatever you&apos;re already
+                  learning—your activity counts toward your squad&apos;s goal.
+                </p>
+                {onResumeLearning ? (
+                  <button
+                    type="button"
+                    onClick={resumeCurrentCourseAndFinish}
+                    className="mt-4 w-full rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+                  >
+                    Resume my course
+                  </button>
+                ) : null}
+              </div>
             )}
             <div className="mt-6 flex justify-end">
               <button

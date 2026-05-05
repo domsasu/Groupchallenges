@@ -20,7 +20,7 @@ const MINI_CARD_IMAGE_BY_CHALLENGE_ID: Record<string, string> = {
   'ch-active-ai-vibe-coding': u('https://images.unsplash.com/photo-1677442136019-21780ecad995'),
   'ch-upcoming-enrolled-streak': u('https://images.unsplash.com/photo-1434030216411-0b793f4b4173'),
   'ch-upcoming-ai-gab-lab-500': u('https://images.unsplash.com/photo-1620712943543-bcc4688e7485'),
-  'ch-completed-enrolled-relay': u('https://images.unsplash.com/photo-1535378917042-10a22c31d466'),
+  'ch-completed-enrolled-relay': u('https://images.unsplash.com/photo-1555949963-aa79dcee981c'),
   'ch-upcoming-design-systems-breadth': u('https://images.unsplash.com/photo-1586717791821-3f44a563fa4c'),
   'ch-upcoming-startups-capstone-collective': u(
     'https://images.unsplash.com/photo-1522071820081-009f0129c71c'
@@ -59,11 +59,29 @@ export function resolveChallengeMiniCardImageSrc(challenge: CommunityChallenge):
 /** Same visual as the mini-card thumbnail; fit=max keeps full composition (then CSS pins top). */
 const DETAIL_HERO_UNSPLASH_PARAMS = 'w=2400&h=1350&fit=max&auto=format&q=85';
 
+/** List row thumbnails (~88–100px CSS); square crop from same base as detail hero for consistency. */
+const BROWSE_ROW_UNSPLASH_PARAMS = 'w=400&h=400&fit=crop&auto=format&q=85';
+
 export function resolveChallengeDetailHeroImageSrc(challenge: CommunityChallenge): string {
   const mini = resolveChallengeMiniCardImageSrc(challenge);
   const base = mini.split('?')[0]!;
   if (base.includes('images.unsplash.com')) {
     return `${base}?${DETAIL_HERO_UNSPLASH_PARAMS}`;
+  }
+  return mini;
+}
+
+/** Browse grid / row cards: matches detail hero asset with a crisp square thumb. */
+export function resolveChallengeBrowseRowImageSrc(challenge: CommunityChallenge): string {
+  const mini = resolveChallengeMiniCardImageSrc(challenge);
+  const base = mini.split('?')[0]!;
+  if (base.includes('images.unsplash.com')) {
+    return `${base}?${BROWSE_ROW_UNSPLASH_PARAMS}`;
+  }
+  const hero = challenge.cardHeroImageSrc;
+  if (hero?.startsWith('http')) {
+    const h = hero.split('?')[0]!;
+    return `${h}?${BROWSE_ROW_UNSPLASH_PARAMS}`;
   }
   return mini;
 }

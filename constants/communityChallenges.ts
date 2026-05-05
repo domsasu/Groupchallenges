@@ -115,7 +115,7 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     groupPlace: 2,
     approxGroupSize: 127,
     whyJoin:
-      '#workingparents cohort: knocking out course modules when kids are asleep, at daycare, or away—about 30–60 minutes a day adds up as your group pushes toward 100 modules together.',
+      '#workingparents: Knock out modules during naps, daycare, or partner coverage—about 30–60 minutes a day pushes your squad toward 100 together.',
     milestones: [
       { id: 'm1', label: 'Silver', target: '25 modules' },
       { id: 'm2', label: 'Gold', target: '50 modules' },
@@ -131,31 +131,24 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     endsAt: '2026-05-27',
     daysLeft: 30,
     optedIn: true,
-    currentTierIndex: 3,
-    /**
-     * Aligned with `resolveGroupsAtTierColumns`: caps [25,50,75,100] place groups by
-     * completed modules (0–24 → Silver col, 25–49 → Gold, 50–74 → Platinum, 75–99 → Diamond).
-     */
-    groupsAtMilestoneTier: [
-      [2],
-      [1, 5],
-      [3, 4],
-      [],
-    ],
-    visualTier: 'gold',
-    /** Learner squad (Amber Foxes): 78/100 modules — strip + ChallengeFullDetail progress. */
-    cardProgress: 0.78,
+    currentTierIndex: 0,
+    /** Early challenge: everyone still in the first milestone band (<25 modules). */
+    groupsAtMilestoneTier: [[1, 2, 3, 4, 5], [], [], []],
+    visualTier: 'silver',
+    /** Learner squad (group 3, Amber Foxes): 9/100 modules — 2nd place; strip progress matches squad pace. */
+    cardProgress: 0.09,
+    /** Team totals capped ≤10 modules (challenge just started). Rank order: 1st → 5th by modules completed. */
     groupProgressTowardGoal: {
-      /** Red Apes — 52 modules (Platinum column). */
-      1: 0.52,
-      /** Blue Herons — 26 modules (Gold column). */
-      2: 0.26,
-      /** Amber Foxes — 78 modules (Diamond band, toward 100). */
-      3: 0.78,
-      /** Emerald Otters — 75 modules (Diamond band). */
-      4: 0.75,
-      /** Violet Pandas — 60 modules (Platinum column). */
-      5: 0.6,
+      /** Red Apes — 10 modules (1st). */
+      1: 0.1,
+      /** Blue Herons — 6 modules. */
+      2: 0.06,
+      /** Amber Foxes — 9 modules (learner’s squad, 2nd). */
+      3: 0.09,
+      /** Emerald Otters — 8 modules. */
+      4: 0.08,
+      /** Violet Pandas — 7 modules. */
+      5: 0.07,
     },
     learnerContributionProgress: 0,
     learnerGoalUnits: 5,

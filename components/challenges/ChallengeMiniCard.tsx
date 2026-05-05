@@ -81,7 +81,7 @@ export const ChallengeMiniCard: React.FC<ChallengeMiniCardProps> = ({
         <div className="mt-3">
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--cds-color-grey-100)]">
             <div
-              className="h-full rounded-full bg-[var(--cds-color-grey-700)]"
+              className="h-full rounded-full bg-[var(--cds-color-green-700)]"
               style={{ width: `${Math.min(100, Math.max(0, Math.round(teamProgressTowardGoal * 100)))}%` }}
             />
           </div>

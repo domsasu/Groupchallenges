@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Award, ChevronDown, Compass, X, Zap } from 'lucide-react';
+import { Award, ChevronDown, Compass, ListFilter, X, Zap } from 'lucide-react';
 import { FEED_COHORT_META, type FeedCohortId } from '../../constants/feedCohorts';
 import { useCommunityCohortMembership } from '../../context/CommunityCohortMembershipContext';
 import {
@@ -26,6 +26,17 @@ export interface ChallengeDiscoveryFilterBarProps {
   onStatusTabChange: (tab: ChallengesStatusTab) => void;
   filters: ChallengeDiscoveryFilters;
   onFiltersChange: React.Dispatch<React.SetStateAction<ChallengeDiscoveryFilters>>;
+  /** Non-zero when taxonomy/cohort filters differ from defaults (shown on filter icon). */
+  activeFilterCount?: number;
+  /** When false, only status tabs render here — use `ChallengeDiscoveryFiltersSection` below the hero/list. */
+  showFilters?: boolean;
+}
+
+export interface ChallengeDiscoveryFiltersSectionProps {
+  statusTab: ChallengesStatusTab;
+  filters: ChallengeDiscoveryFilters;
+  onFiltersChange: React.Dispatch<React.SetStateAction<ChallengeDiscoveryFilters>>;
+  activeFilterCount?: number;
 }
 
 type OpenBucket = null | 'participation' | 'metric' | 'duration';
@@ -64,11 +75,58 @@ function toggleInList<T extends string>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
 }
 
-export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarProps> = ({
+export const ChallengeDiscoveryStatusTabs: React.FC<
+  Pick<ChallengeDiscoveryFilterBarProps, 'statusTab' | 'onStatusTabChange'>
+> = ({ statusTab, onStatusTabChange }) => (
+  <div
+    className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3"
+    role="tablist"
+    aria-label="Challenge list"
+  >
+    {STATUS_TABS.map((t) => {
+      const selected = statusTab === t.id;
+      const Icon = t.Icon;
+      return (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={selected}
+          id={`challenge-status-${t.id}`}
+          tabIndex={selected ? 0 : -1}
+          onClick={() => onStatusTabChange(t.id)}
+          style={{ backgroundImage: BUCKET_CARD_GRADIENT }}
+          className={`relative flex min-h-[57px] w-full items-center justify-between gap-2 rounded-[14px] px-3 py-3 text-left shadow-sm transition sm:min-h-[64px] sm:px-4 ${
+            selected
+              ? 'shadow-md ring-2 ring-[var(--cds-color-blue-700)] ring-offset-2 ring-offset-[var(--cds-color-white)]'
+              : 'ring-1 ring-[rgba(0,0,0,0.06)] hover:ring-[var(--cds-color-grey-300)] hover:shadow-md'
+          } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]`}
+        >
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center">
+            <span className="font-semibold leading-5 tracking-[-0.02em] text-[var(--cds-color-grey-975)] text-[clamp(0.875rem,2vw,1.05rem)]">
+              {t.label}
+            </span>
+          </div>
+          <div
+            className="relative z-10 flex h-[26px] w-[26px] shrink-0 items-center justify-center text-[var(--cds-color-blue-700)] sm:h-[28px] sm:w-[28px]"
+            aria-hidden
+          >
+            <Icon
+              className={`h-[26px] w-[26px] sm:h-[28px] sm:w-[28px] ${selected ? STATUS_TAB_SELECTED_ICON_CLASS[t.id] : ''}`}
+              strokeWidth={1.25}
+            />
+          </div>
+        </button>
+      );
+    })}
+  </div>
+);
+
+export const ChallengeDiscoveryFiltersSection: React.FC<ChallengeDiscoveryFiltersSectionProps> = ({
   statusTab,
-  onStatusTabChange,
   filters,
   onFiltersChange,
+  activeFilterCount = 0,
 }) => {
   const { joinedCohortIds } = useCommunityCohortMembership();
   const joinedSet = useMemo(() => new Set(joinedCohortIds), [joinedCohortIds]);
@@ -94,11 +152,31 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
   }, [filters.cohortScope, filters.cohortIds, joinedCohortIds, joinedSet]);
 
   const [openBucket, setOpenBucket] = useState<OpenBucket>(null);
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const filtersSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setOpenBucket(null);
   }, [statusTab]);
+
+  /** Scroll filters into view under sticky Browse/Active/Completed tabs when expanding (after open animation). */
+  useEffect(() => {
+    if (!filtersExpanded) return;
+    const t = window.setTimeout(() => {
+      const el = filtersSectionRef.current;
+      if (!el) return;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' });
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [filtersExpanded]);
+
+  useEffect(() => {
+    if (!filtersExpanded) {
+      setOpenBucket(null);
+    }
+  }, [filtersExpanded]);
 
   useEffect(() => {
     if (!openBucket) return;
@@ -118,6 +196,15 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
       document.removeEventListener('keydown', onKey);
     };
   }, [openBucket]);
+
+  useEffect(() => {
+    if (!filtersExpanded) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltersExpanded(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [filtersExpanded]);
 
   const toggleBucket = (b: Exclude<OpenBucket, null>) => {
     setOpenBucket((prev) => (prev === b ? null : b));
@@ -149,7 +236,7 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
       id={id}
       role="dialog"
       aria-label={panelLabel}
-      className="absolute left-0 top-[calc(100%+8px)] z-50 w-[min(calc(100vw-2rem),420px)] overflow-hidden rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[0_12px_40px_rgba(15,23,42,0.14)]"
+      className="absolute right-0 left-auto top-[calc(100%+8px)] z-50 w-[min(calc(100vw-2rem),420px)] overflow-hidden rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[0_12px_40px_rgba(15,23,42,0.14)]"
     >
       <div className="max-h-[min(70vh,520px)] overflow-y-auto overscroll-contain p-4">{children}</div>
       <div className="flex items-center justify-end gap-3 border-t border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] px-4 py-3">
@@ -187,54 +274,44 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
   ] as const;
 
   return (
-    <div className="shrink-0 space-y-4 px-1 pt-1">
-      {/* Top-level status — LOHP-style bucket cards (Figma 5239:45914) */}
-      <div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
-        role="tablist"
-        aria-label="Challenge list"
-      >
-        {STATUS_TABS.map((t) => {
-          const selected = statusTab === t.id;
-          const Icon = t.Icon;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              id={`challenge-status-${t.id}`}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => onStatusTabChange(t.id)}
-              style={{ backgroundImage: BUCKET_CARD_GRADIENT }}
-              className={`relative flex min-h-[76px] w-full items-center justify-between gap-3 rounded-[18px] px-4 py-4 text-left shadow-sm transition sm:min-h-[86px] sm:px-5 ${
-                selected
-                  ? 'shadow-md ring-2 ring-[var(--cds-color-blue-700)] ring-offset-2 ring-offset-[var(--cds-color-grey-25)]'
-                  : 'ring-1 ring-[rgba(0,0,0,0.06)] hover:ring-[var(--cds-color-grey-300)] hover:shadow-md'
-              } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]`}
-            >
-              <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center">
-                <span className="font-semibold leading-6 tracking-[-0.02em] text-[var(--cds-color-grey-975)] text-[clamp(1rem,2.5vw,1.25rem)]">
-                  {t.label}
-                </span>
-              </div>
-              <div
-                className="relative z-10 flex h-[35px] w-[35px] shrink-0 items-center justify-center text-[var(--cds-color-blue-700)]"
-                aria-hidden
-              >
-                <Icon
-                  className={`h-[35px] w-[35px] ${selected ? STATUS_TAB_SELECTED_ICON_CLASS[t.id] : ''}`}
-                  strokeWidth={1.25}
-                />
-              </div>
-            </button>
-          );
-        })}
+    <div
+      ref={filtersSectionRef}
+      className="mb-3 shrink-0 scroll-mt-28 space-y-3 px-1 md:scroll-mt-32"
+    >
+      <div className="flex justify-end px-0.5">
+        <button
+          type="button"
+          aria-expanded={filtersExpanded}
+          aria-controls="challenge-discovery-filters"
+          onClick={() => setFiltersExpanded((v) => !v)}
+          className="relative inline-flex h-10 items-center gap-2 rounded-full border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-3 text-sm font-semibold text-[var(--cds-color-grey-800)] shadow-sm transition hover:border-[var(--cds-color-grey-300)] hover:bg-[var(--cds-color-grey-25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+        >
+          <ListFilter className="h-4 w-4 shrink-0 text-[var(--cds-color-grey-700)]" aria-hidden strokeWidth={2} />
+          <span>Filters</span>
+          {activeFilterCount > 0 ? (
+            <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[var(--cds-color-blue-700)] px-1 text-[10px] font-bold text-white">
+              {activeFilterCount > 9 ? '9+' : activeFilterCount}
+            </span>
+          ) : null}
+        </button>
       </div>
 
-      {/* Filter buckets — separate pill dropdowns (Airbnb-style bar) */}
-      <div ref={wrapRef} className="relative">
-        <div className="flex flex-wrap items-stretch gap-2" role="group" aria-label="Refine challenges">
+      {/* Filter buckets — collapsible; separate pill dropdowns (Airbnb-style bar) */}
+      <div
+        id="challenge-discovery-filters"
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${filtersExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+      >
+        {/* When expanded, overflow must be visible — anchored panels use position:absolute below triggers and would be clipped by overflow-hidden (collapse animation still uses 0fr row). */}
+        <div className={filtersExpanded ? 'min-h-0 overflow-visible' : 'min-h-0 overflow-hidden'}>
+          <div
+            className={`pt-1 transition-opacity duration-300 ease-out ${filtersExpanded ? 'opacity-100' : 'opacity-0'}`}
+          >
+            <div ref={wrapRef} className="relative">
+              <div
+                className="flex flex-wrap items-stretch justify-end gap-2"
+                role="group"
+                aria-label="Refine challenges"
+              >
           {FILTER_SEGMENTS.map((seg) => {
             const open = openBucket === seg.key;
             return (
@@ -486,8 +563,32 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
               </div>
             );
           })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarProps> = ({
+  showFilters = true,
+  statusTab,
+  onStatusTabChange,
+  filters,
+  onFiltersChange,
+  activeFilterCount = 0,
+}) => (
+  <div className="shrink-0 space-y-3 px-1 pt-1">
+    <ChallengeDiscoveryStatusTabs statusTab={statusTab} onStatusTabChange={onStatusTabChange} />
+    {showFilters ? (
+      <ChallengeDiscoveryFiltersSection
+        statusTab={statusTab}
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        activeFilterCount={activeFilterCount}
+      />
+    ) : null}
+  </div>
+);

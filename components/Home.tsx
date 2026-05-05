@@ -31,7 +31,7 @@ import {
 } from '../constants/communityChallenges';
 import { mergeCommunityChallengesWithStorage } from '../constants/communityChallengesPersistence';
 import { resolveChallengeMiniCardImageSrc } from '../constants/challengeMiniCardImage';
-import type { CommunitySurface } from './FeedPage';
+import type { CommunitySurface, NavigateToCommunityOpts } from './FeedPage';
 
 // Assessment sub-skill results type - matches App.tsx
 interface AssessmentSubSkillResults {
@@ -53,7 +53,7 @@ interface HomeProps {
   dailyGoalCompletions?: number;
   assessmentResults?: AssessmentSubSkillResults | null;
   onNavigateToDashboard?: () => void;
-  onNavigateToFeed?: (opts?: { cohortId?: FeedCohortId; tab?: CommunitySurface }) => void;
+  onNavigateToFeed?: (opts?: NavigateToCommunityOpts) => void;
   onTakeSkillAssessment?: () => void;
   dailyTimeGoal?: number;
   introModalClosed?: boolean;
@@ -483,7 +483,7 @@ function HomeChallengeCarousel({
   onNavigateToFeed,
 }: {
   challenges: CommunityChallenge[];
-  onNavigateToFeed?: (opts?: { cohortId?: FeedCohortId; tab?: CommunitySurface }) => void;
+  onNavigateToFeed?: (opts?: NavigateToCommunityOpts) => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const challenge = challenges[currentIndex];
@@ -494,7 +494,13 @@ function HomeChallengeCarousel({
       {onNavigateToFeed ? (
         <button
           type="button"
-          onClick={() => onNavigateToFeed({ tab: 'challenges', cohortId: challenge.cohortId })}
+          onClick={() =>
+            onNavigateToFeed({
+              tab: 'challenges',
+              cohortId: challenge.cohortId,
+              challengeId: challenge.id,
+            })
+          }
           className="w-full rounded-[var(--cds-border-radius-100)] border border-transparent bg-[var(--cds-color-grey-25)] p-3 text-left transition hover:border-[var(--cds-color-blue-700)] hover:bg-[var(--cds-color-white)] focus-visible:border-[var(--cds-color-blue-700)]"
         >
           <HomeSidebarMiniChallenge

@@ -16,17 +16,35 @@ import { Icons } from './Icons';
 import { enrichFeedVideoThumbnails } from '../services/unsplashThumbnails';
 import { CommunityCohortMembershipProvider } from '../context/CommunityCohortMembershipContext';
 import { ChallengesView } from './challenges/ChallengesView';
+import type { ChallengesStatusTab } from '../constants/challengeFilters';
 
 export type CommunitySurface = 'feed' | 'challenges';
+
+/** Options passed when navigating from Home (carousel, mini-feed, etc.) into Community. */
+export type NavigateToCommunityOpts = {
+  cohortId?: FeedCohortId;
+  tab?: CommunitySurface;
+  /** When set, Challenges opens full detail for this challenge (e.g. Home sidebar carousel). */
+  challengeId?: string;
+};
 
 export interface FeedPageProps {
   /** When opening Community from Home mini-feed, select this cohort (same as mini-feed lead cohort). */
   initialSelectedCohortId?: FeedCohortId;
   /** Open Community on Feed vs Challenges (e.g. deep link from Home). */
   initialCommunityTab?: CommunitySurface;
+  /** Deep-open challenge detail modal on Challenges surface. */
+  initialOpenChallengeId?: string;
+  /** Browse / Active / Completed tab when landing on Challenges (defaults to Active when `initialOpenChallengeId` is set). */
+  initialChallengesStatusTab?: ChallengesStatusTab;
 }
 
-export const FeedPage: React.FC<FeedPageProps> = ({ initialSelectedCohortId, initialCommunityTab }) => {
+export const FeedPage: React.FC<FeedPageProps> = ({
+  initialSelectedCohortId,
+  initialCommunityTab,
+  initialOpenChallengeId,
+  initialChallengesStatusTab,
+}) => {
   const { variant, surface } = useSiteVariant();
   /** `null` = All snacks stream (mixed cohorts). */
   const [selectedCohortId, setSelectedCohortId] = useState<FeedCohortId | null>(
@@ -93,17 +111,28 @@ export const FeedPage: React.FC<FeedPageProps> = ({ initialSelectedCohortId, ini
 
   const timelineItems = feedItemsWithThumbs ?? feedItems;
 
+  const [communityScrollLocked, setCommunityScrollLocked] = useState(false);
+
   return (
     <CommunityCohortMembershipProvider>
-      <div className="flex-1 bg-[var(--cds-color-grey-25)] overflow-y-auto custom-scrollbar">
+      <div
+        className={`flex-1 bg-[var(--cds-color-white)] custom-scrollbar ${
+          communityScrollLocked ? 'overflow-y-hidden' : 'overflow-y-auto'
+        }`}
+      >
         <div
-          className={`relative bg-[var(--cds-color-grey-25)] min-h-[min(100%,calc(100vh-5rem))] ${surface.feedBackdropExtraClassName}`}
+          className={`relative bg-[var(--cds-color-white)] min-h-[min(100%,calc(100vh-5rem))] ${surface.feedBackdropExtraClassName}`}
           data-site-variant={variant}
         >
-          {/* Full-bleed white bar so no grey shows at viewport edges; tab labels align with page column below. */}
-          <div className="relative z-0 mx-auto max-w-[1440px] px-4 pb-4 md:px-6 md:pb-5 pt-6">
+          <div className="relative z-0 mx-auto max-w-[1440px] bg-[var(--cds-color-white)] px-4 pb-4 md:px-6 md:pb-5 pt-6">
             <div className="relative z-0">
-              <ChallengesView />
+              <ChallengesView
+                onScrollLockChange={setCommunityScrollLocked}
+                initialOpenChallengeId={initialOpenChallengeId}
+                initialChallengesStatusTab={
+                  initialChallengesStatusTab ?? (initialOpenChallengeId ? 'active' : undefined)
+                }
+              />
             </div>
           </div>
         </div>
