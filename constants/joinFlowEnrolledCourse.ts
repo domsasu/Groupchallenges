@@ -5,5 +5,7 @@ export const VIBE_ENROLLED_COURSE = {
   provider: 'Scrimba',
   type: 'Course',
   rating: 4.3,
+  /** Shown in join recap instead of star rating when learner has partial progress. */
+  completionPercent: 32,
   imageSrc: '/challenges/vibe-coding-claude-code-thumb.svg',
 } as const;

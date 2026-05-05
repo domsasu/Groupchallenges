@@ -24,7 +24,6 @@ import {
 export interface ChallengeDiscoveryFilterBarProps {
   statusTab: ChallengesStatusTab;
   onStatusTabChange: (tab: ChallengesStatusTab) => void;
-  activeJoinedCount: number;
   filters: ChallengeDiscoveryFilters;
   onFiltersChange: React.Dispatch<React.SetStateAction<ChallengeDiscoveryFilters>>;
 }
@@ -65,37 +64,9 @@ function toggleInList<T extends string>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((x) => x !== value) : [...list, value];
 }
 
-function participationSubtitle(f: ChallengeDiscoveryFilters): string {
-  const modePart =
-    f.participationModes.length === 0
-      ? 'All styles'
-      : f.participationModes.map((m) => PARTICIPATION_MODE_LABELS[m]).join(', ');
-  let scopePart = 'Any audience';
-  if (f.cohortScope === 'my_cohorts') {
-    scopePart =
-      f.cohortIds.length === 0
-        ? 'My cohorts'
-        : `${f.cohortIds.length} cohort${f.cohortIds.length === 1 ? '' : 's'}`;
-  } else if (f.cohortScope === 'discover') {
-    scopePart = 'Discover';
-  }
-  return [scopePart, modePart].join(' · ');
-}
-
-function metricSubtitle(f: ChallengeDiscoveryFilters): string {
-  if (f.metrics.length === 0) return 'All types';
-  return f.metrics.map((m) => CHALLENGE_METRIC_LABELS[m]).join(', ');
-}
-
-function durationSubtitle(f: ChallengeDiscoveryFilters): string {
-  if (f.durationBuckets.length === 0) return 'Any window';
-  return f.durationBuckets.map((d) => DURATION_BUCKET_LABELS[d]).join(', ');
-}
-
 export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarProps> = ({
   statusTab,
   onStatusTabChange,
-  activeJoinedCount,
   filters,
   onFiltersChange,
 }) => {
@@ -198,21 +169,18 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
     {
       key: 'participation' as const,
       title: 'Participation',
-      sub: participationSubtitle(filters),
       ariaControls: 'challenge-filter-participation',
       panelLabel: 'Participation and cohort filters',
     },
     {
       key: 'metric' as const,
       title: 'Challenge type',
-      sub: metricSubtitle(filters),
       ariaControls: 'challenge-filter-metric',
       panelLabel: 'Challenge type filters',
     },
     {
       key: 'duration' as const,
       title: 'Duration',
-      sub: durationSubtitle(filters),
       ariaControls: 'challenge-filter-duration',
       panelLabel: 'Duration filters',
     },
@@ -228,7 +196,6 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
       >
         {STATUS_TABS.map((t) => {
           const selected = statusTab === t.id;
-          const extra = t.id === 'active' && activeJoinedCount > 0 ? ` · ${activeJoinedCount}` : '';
           const Icon = t.Icon;
           return (
             <button
@@ -249,7 +216,6 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
               <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center">
                 <span className="font-semibold leading-6 tracking-[-0.02em] text-[var(--cds-color-grey-975)] text-[clamp(1rem,2.5vw,1.25rem)]">
                   {t.label}
-                  {extra}
                 </span>
               </div>
               <div
@@ -284,13 +250,8 @@ export const ChallengeDiscoveryFilterBar: React.FC<ChallengeDiscoveryFilterBarPr
                       : 'border-[#dbe0e1] hover:border-[var(--cds-color-grey-400)]'
                   } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]`}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[12px] font-semibold uppercase tracking-wide text-[#404b61]">
-                      {seg.title}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12px] leading-[18px] text-[#63676b]">
-                      {seg.sub}
-                    </span>
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-semibold uppercase tracking-wide text-[#404b61]">
+                    {seg.title}
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 transition-transform duration-200 ${

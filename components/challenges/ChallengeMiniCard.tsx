@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   formatChallengeCardHeroLabel,
-  formatProgressGoalQuantityLine,
+  formatProgressGoalQuantityLineForFraction,
   type CommunityChallenge,
 } from '../../constants/communityChallenges';
 import {
@@ -32,7 +32,12 @@ export const ChallengeMiniCard: React.FC<ChallengeMiniCardProps> = ({
   const MetricIcon = CHALLENGE_METRIC_ICONS[challenge.challengeMetric];
   const PartIcon = PARTICIPATION_MODE_ICONS[challenge.participationMode];
   const DurIcon = DURATION_BUCKET_ICONS[challenge.durationBucket];
-  const progressLine = formatProgressGoalQuantityLine(challenge);
+  /** Squad aggregate toward the challenge goal (same basis as detail panel when `groupProgressTowardGoal` is set). */
+  const teamProgressTowardGoal =
+    challenge.groupProgressTowardGoal?.[challenge.groupIndex] != null
+      ? Math.min(1, Math.max(0, challenge.groupProgressTowardGoal[challenge.groupIndex]!))
+      : Math.min(1, Math.max(0, challenge.cardProgress));
+  const progressLine = formatProgressGoalQuantityLineForFraction(challenge, teamProgressTowardGoal);
   const thumbSrc = resolveChallengeMiniCardImageSrc(challenge);
   const showProgress =
     challenge.lifecycle !== 'upcoming' &&
@@ -77,7 +82,7 @@ export const ChallengeMiniCard: React.FC<ChallengeMiniCardProps> = ({
           <div className="h-1.5 overflow-hidden rounded-full bg-[var(--cds-color-grey-100)]">
             <div
               className="h-full rounded-full bg-[var(--cds-color-grey-700)]"
-              style={{ width: `${Math.min(100, Math.max(0, Math.round(challenge.cardProgress * 100)))}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, Math.round(teamProgressTowardGoal * 100)))}%` }}
             />
           </div>
           <p className="mt-1 text-[11px] tabular-nums text-[var(--cds-color-grey-600)]">{progressLine}</p>

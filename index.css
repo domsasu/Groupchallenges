@@ -153,6 +153,30 @@ input, button, textarea, select {
   background: var(--cds-color-grey-400);
 }
 
+/** Same colors as `.custom-scrollbar`; ~4pt narrower than 6px (floor 2px). Challenge discovery rail. */
+.custom-scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cds-color-grey-300) var(--cds-color-grey-50);
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar {
+  width: max(2px, calc(6px - 4pt));
+  height: max(2px, calc(6px - 4pt));
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--cds-color-grey-50);
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--cds-color-grey-300);
+  border-radius: max(1px, calc(3px - 2pt));
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--cds-color-grey-400);
+}
+
 /* ============================================
    Animations
    ============================================ */

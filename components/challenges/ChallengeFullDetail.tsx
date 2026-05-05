@@ -20,6 +20,7 @@ import {
   DURATION_BUCKET_ICONS,
   PARTICIPATION_MODE_ICONS,
 } from '../../constants/challengePillIcons';
+import { resolveChallengeDetailHeroImageSrc } from '../../constants/challengeMiniCardImage';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 import { Icons } from '../Icons';
 import { ChallengeDetailPanel } from './ChallengeDetailPanel';
@@ -165,7 +166,7 @@ function MilestoneLeaderboard({
         className="overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)]"
       >
         {/* Panel header: milestone track */}
-        <div className="border-b border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] px-5 pt-5 pb-4">
+        <div className="border-b border-[var(--cds-color-grey-100)] px-5 pt-5 pb-4">
           <div
             className="overflow-x-auto"
             role="tablist"
@@ -202,21 +203,38 @@ function MilestoneLeaderboard({
                     )}
 
                     {m.isStart ? (
-                      /* ── Start origin node (same size as milestones, non-interactive) ── */
-                      <div className="flex flex-col items-center">
-                        <span className="mb-2 text-[13px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-400)]">
+                      /* ── Start origin node (clickable so users can return to the first bucket) ── */
+                      <button
+                        role="tab"
+                        aria-selected={isSelected}
+                        onClick={() => setSelectedIdx(i)}
+                        className="relative flex flex-col items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--cds-color-blue-700)]"
+                      >
+                        <span
+                          className={`mb-2 text-[13px] font-bold tabular-nums leading-tight transition-colors ${
+                            isSelected
+                              ? 'text-[var(--cds-color-blue-700)]'
+                              : 'text-[var(--cds-color-grey-400)]'
+                          }`}
+                        >
                           {m.target}
                         </span>
-                        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 ${
-                          optedIn
+                        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                          isSelected
                             ? 'border-[var(--cds-color-blue-700)] bg-[var(--cds-color-blue-700)]'
                             : 'border-[var(--cds-color-grey-300)] bg-[var(--cds-color-white)]'
                         }`}>
-                          <span className={`text-[13px] font-bold tabular-nums ${optedIn ? 'text-white' : 'text-[var(--cds-color-grey-600)]'}`}>
+                          <span className={`text-[13px] font-bold tabular-nums ${isSelected ? 'text-white' : 'text-[var(--cds-color-grey-600)]'}`}>
                             0
                           </span>
                         </div>
-                        <span className="mt-2 text-[10px] leading-snug text-[var(--cds-color-grey-400)]">
+                        <span
+                          className={`mt-2 text-[10px] leading-snug transition-colors ${
+                            isSelected
+                              ? 'font-semibold text-[var(--cds-color-blue-700)]'
+                              : 'text-[var(--cds-color-grey-400)]'
+                          }`}
+                        >
                           {m.label}
                         </span>
                         {/* "You're here" on start when learner hasn't cleared any milestone yet */}
@@ -225,7 +243,7 @@ function MilestoneLeaderboard({
                             You&apos;re here
                           </span>
                         )}
-                      </div>
+                      </button>
                     ) : (
                       /* ── Real milestone node (clickable tab) ── */
                       <button
@@ -344,7 +362,7 @@ function MilestoneLeaderboard({
                     rankIdx < sortedGroups.length - 1
                       ? 'border-b border-[var(--cds-color-grey-100)]'
                       : ''
-                  }`}
+                  } ${isYours ? 'bg-[var(--cds-color-grey-25)]' : ''}`}
                 >
                   {/* Rank number */}
                   <span
@@ -362,11 +380,6 @@ function MilestoneLeaderboard({
                       >
                         {squad.label}
                       </span>
-                      {isYours && (
-                        <span className="cds-body-tertiary text-[var(--cds-color-grey-500)]">
-                          Your team
-                        </span>
-                      )}
                     </div>
                     <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-500)]">
                       ~{headcount.toLocaleString()} members
@@ -403,29 +416,43 @@ function ChallengeTipsCard({ steps }: { steps: string[] }) {
 }
 
 /** Minimal milestone list + goal summary for unjoined/upcoming challenges. */
-function UnjoinedGoalPreview({ challenge }: { challenge: CommunityChallenge }) {
+function UnjoinedGoalPreview({
+  challenge,
+  tipsAside,
+}: {
+  challenge: CommunityChallenge;
+  /** Rendered to the right of the goal summary on sm+; stacks below on narrow viewports. */
+  tipsAside?: React.ReactNode;
+}) {
   const goalTotal = parseChallengeGoalTotalUnits(challenge);
   const lastTarget = challenge.milestones[challenge.milestones.length - 1]?.target;
   const unitLabel = extractUnitLabel(lastTarget);
 
   return (
     <div className="space-y-3">
-      {/* Goal summary */}
-      <div className="w-fit inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)]">
-        <div className="px-4 py-3">
-          <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Your goal</p>
-          <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
-            {challenge.learnerGoalUnits ?? goalTotal}
-            <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
-          </p>
+      {/* Goal summary + optional tips (side-by-side from sm) */}
+      <div
+        className={`flex flex-col gap-4 ${tipsAside ? 'sm:flex-row sm:items-start sm:gap-6' : ''}`}
+      >
+        <div className="w-fit shrink-0 inline-grid grid-cols-2 divide-x divide-[var(--cds-color-grey-200)] overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)]">
+          <div className="px-4 py-3">
+            <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Your goal</p>
+            <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
+              {challenge.learnerGoalUnits ?? goalTotal}
+              <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
+            </p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Team goal</p>
+            <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
+              {goalTotal}
+              <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
+            </p>
+          </div>
         </div>
-        <div className="px-4 py-3">
-          <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Team goal</p>
-          <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
-            {goalTotal}
-            <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
-          </p>
-        </div>
+        {tipsAside ? (
+          <div className="min-w-0 flex-1 sm:min-w-[12rem] sm:max-w-xl">{tipsAside}</div>
+        ) : null}
       </div>
 
       {/* Milestones list */}
@@ -511,47 +538,45 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   const ParticipationIcon = PARTICIPATION_MODE_ICONS[challenge.participationMode];
   const MetricIcon = CHALLENGE_METRIC_ICONS[challenge.challengeMetric];
   const DurationIcon = DURATION_BUCKET_ICONS[challenge.durationBucket];
+  const detailHeroSrc = resolveChallengeDetailHeroImageSrc(challenge);
 
   return (
     <div className="overflow-visible rounded-2xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] shadow-[var(--cds-elevation-level1)]">
 
-      {/* ── Header ────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-t-2xl border-b border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 pb-4 pt-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="line-clamp-2 max-w-[min(100%,14rem)] rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-semibold leading-snug text-sky-950">
-                {formatChallengeCardHeroLabel(challenge)}
-              </span>
-              <span className="rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-2 py-0.5 text-[11px] font-medium text-[var(--cds-color-grey-800)]">
-                {cohortMeta.pillLabel}
-                {userInCohort ? ' · member' : ' · not joined'}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
-                <ParticipationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
-                {PARTICIPATION_MODE_LABELS[challenge.participationMode]}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
-                <MetricIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
-                {CHALLENGE_METRIC_LABELS[challenge.challengeMetric]}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-md border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-700)]">
-                <DurationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
-                {DURATION_BUCKET_LABELS[challenge.durationBucket]}
-              </span>
-            </div>
-            <h2 className="text-lg font-semibold leading-snug text-[var(--cds-color-grey-975)] sm:text-xl">{challenge.name}</h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-[var(--cds-color-grey-700)]">{challenge.whyJoin}</p>
-            {!userInCohort && showJoinCta ? (
-              <div className="rounded-lg border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-3 py-2.5 text-sm text-[var(--cds-color-grey-800)]">
-                <p className="font-medium text-[var(--cds-color-grey-975)]">{cohortMeta.label}</p>
-                <p className="mt-1 text-[var(--cds-color-grey-700)]">{cohortMeta.shortDescription}</p>
-                <p className="mt-1.5 text-xs text-[var(--cds-color-grey-600)]">
-                  {cohortMeta.memberCount.toLocaleString()} members · joining enrolls you in this cohort and opts you into
-                  the challenge.
-                </p>
-              </div>
-            ) : null}
+      {/* ── Hero banner + meta pills / CTAs overlay ───────────────── */}
+      <div className="relative w-full overflow-hidden rounded-t-2xl bg-[var(--cds-color-grey-100)] aspect-[21/9] min-h-[95px] max-h-[255px]">
+        <img
+          src={detailHeroSrc}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-top"
+          loading="lazy"
+          decoding="async"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.45)_38%,rgba(0,0,0,0.1)_68%,transparent_100%)]"
+          aria-hidden
+        />
+        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-3 px-4 pb-4 pt-10 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <span className="line-clamp-2 max-w-[min(100%,14rem)] rounded-lg bg-sky-100 px-2.5 py-1 text-xs font-semibold leading-snug text-sky-950 shadow-sm">
+              {formatChallengeCardHeroLabel(challenge)}
+            </span>
+            <span className="rounded-md border border-white/30 bg-white/90 px-2 py-0.5 text-[11px] font-medium text-[var(--cds-color-grey-900)] shadow-sm backdrop-blur-[2px]">
+              {cohortMeta.pillLabel}
+              {userInCohort ? ' · member' : ' · not joined'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/30 bg-white/90 px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-800)] shadow-sm backdrop-blur-[2px]">
+              <ParticipationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+              {PARTICIPATION_MODE_LABELS[challenge.participationMode]}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/30 bg-white/90 px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-800)] shadow-sm backdrop-blur-[2px]">
+              <MetricIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+              {CHALLENGE_METRIC_LABELS[challenge.challengeMetric]}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/30 bg-white/90 px-2 py-0.5 text-[11px] text-[var(--cds-color-grey-800)] shadow-sm backdrop-blur-[2px]">
+              <DurationIcon className="h-3 w-3 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
+              {DURATION_BUCKET_LABELS[challenge.durationBucket]}
+            </span>
           </div>
           {(isActive && !optedIn) || isUpcoming ? (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
@@ -559,28 +584,46 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                 <button
                   type="button"
                   onClick={joinChallenge}
-                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-md hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
                 >
                   {joinPrimaryLabel}
                 </button>
               )}
               {isUpcoming && optedIn && (
                 <span
-                  className="rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-4 py-2 cds-action-secondary text-[var(--cds-color-grey-975)] shadow-sm"
+                  className="rounded-[var(--cds-border-radius-100)] border border-white/40 bg-white/90 px-4 py-2 cds-action-secondary text-[var(--cds-color-grey-975)] shadow-md backdrop-blur-[2px]"
                   role="status"
                 >
-                  Joined ✓
+                  Joined
                 </span>
               )}
               {isUpcoming && !optedIn && (
                 <button
                   type="button"
                   onClick={joinChallenge}
-                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-md hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
                 >
                   {joinPrimaryLabel}
                 </button>
               )}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ── Header (title + description) ───────────────────────── */}
+      <div className="relative overflow-hidden border-b border-[var(--cds-color-grey-100)] bg-[var(--cds-color-white)] px-4 pb-4 pt-4">
+        <div className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold leading-snug text-[var(--cds-color-grey-975)] sm:text-xl">{challenge.name}</h2>
+          <p className="max-w-3xl text-sm leading-relaxed text-[var(--cds-color-grey-700)]">{challenge.whyJoin}</p>
+          {!userInCohort && showJoinCta ? (
+            <div className="rounded-lg border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] px-3 py-2.5 text-sm text-[var(--cds-color-grey-800)]">
+              <p className="font-bold text-[var(--cds-color-grey-975)]">{cohortMeta.label}</p>
+              <p className="mt-1 text-[var(--cds-color-grey-700)]">{cohortMeta.shortDescription}</p>
+              <p className="mt-1.5 text-xs text-[var(--cds-color-grey-600)]">
+                {cohortMeta.memberCount.toLocaleString()} members · joining enrolls you in this cohort and opts you into the
+                challenge.
+              </p>
             </div>
           ) : null}
         </div>
@@ -678,12 +721,12 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
 
         {/* ACTIVE (not joined) or UPCOMING: simplified goal + milestones + tips */}
         {!isCompleted && (!optedIn || isUpcoming) && challenge.milestones.length > 0 && (
-          <>
-            <UnjoinedGoalPreview challenge={challenge} />
-            {challenge.steps.length > 0 && (
-              <ChallengeTipsCard steps={challenge.steps} />
-            )}
-          </>
+          <UnjoinedGoalPreview
+            challenge={challenge}
+            tipsAside={
+              challenge.steps.length > 0 ? <ChallengeTipsCard steps={challenge.steps} /> : undefined
+            }
+          />
         )}
 
       </div>

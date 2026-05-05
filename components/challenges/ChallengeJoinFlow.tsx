@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
 import { VIBE_ENROLLED_COURSE } from '../../constants/joinFlowEnrolledCourse';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import { EnrolledCourseMiniCard } from './EnrolledCourseMiniCard';
-import { CHALLENGE_TIER_ART_SRC } from '../../constants/challengeTierVisuals';
+import { resolveChallengeMiniCardImageSrc } from '../../constants/challengeMiniCardImage';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 
 export interface ChallengeJoinFlowProps {
@@ -27,7 +27,8 @@ function parseChallengeLocalDate(isoDate: string): Date {
 export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge, onClose, onComplete }) => {
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
   const isUpcoming = challenge.lifecycle === 'upcoming';
-  const tierSrc = challenge.cardHeroImageSrc ?? CHALLENGE_TIER_ART_SRC[challenge.visualTier];
+  const joinHeroSrc = resolveChallengeMiniCardImageSrc(challenge);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const [step, setStep] = useState<Step>('intro');
   const [cycleDisplayIndex, setCycleDisplayIndex] = useState(1);
@@ -47,9 +48,90 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
     setCycleDisplayIndex(1);
   }, [challenge.id]);
 
-  const handleStartIntro = useCallback(() => {
-    setStep('assign');
+  const ensureAudioContext = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const AC =
+        window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AC();
+      }
+      void audioCtxRef.current.resume();
+      return audioCtxRef.current;
+    } catch {
+      return null;
+    }
   }, []);
+
+  const playSelectionTick = useCallback(
+    (groupIndex: number) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(ctx.destination);
+      const base = 460;
+      const freq = base + ((groupIndex - 1) % Math.max(1, challenge.groupCount)) * 32;
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      g.gain.setValueAtTime(0.055, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0008, ctx.currentTime + 0.034);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.04);
+    },
+    [challenge.groupCount]
+  );
+
+  const playResolveChime = useCallback(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const freqs = [640, 860, 1020];
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.type = 'sine';
+      const start = t + i * 0.055;
+      osc.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(0.065, start + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0008, start + 0.22);
+      osc.start(start);
+      osc.stop(start + 0.24);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'assign') return;
+    playSelectionTick(cycleDisplayIndex);
+  }, [step, cycleDisplayIndex, playSelectionTick]);
+
+  useEffect(() => {
+    if (step !== 'recap') return;
+    playResolveChime();
+  }, [step, playResolveChime]);
+
+  useEffect(() => {
+    return () => {
+      try {
+        void audioCtxRef.current?.suspend();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, []);
+
+  const handleStartIntro = useCallback(() => {
+    ensureAudioContext();
+    setStep('assign');
+  }, [ensureAudioContext]);
 
   useEffect(() => {
     if (step !== 'assign' || targetGroupIndex < 1) return;
@@ -82,6 +164,15 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
     onClose();
   }, [targetGroupIndex, onComplete, onClose]);
 
+  /** On recap, dismissing still commits the join (same as primary CTAs). Earlier steps cancel without joining. */
+  const handleDismiss = useCallback(() => {
+    if (step === 'recap' && targetGroupIndex >= 1) {
+      finishJoin();
+      return;
+    }
+    onClose();
+  }, [step, targetGroupIndex, finishJoin, onClose]);
+
   const tips = challenge.steps.slice(0, 3);
   const assignSquad = groupSquadForChallenge(challenge, cycleDisplayIndex);
 
@@ -90,7 +181,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
       <div
         className="absolute inset-0 bg-[var(--cds-color-grey-975)]/60 backdrop-blur-sm"
         aria-hidden
-        onClick={onClose}
+        onClick={handleDismiss}
       />
       <div
         role="dialog"
@@ -101,7 +192,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleDismiss}
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-[var(--cds-color-grey-500)] transition-colors hover:bg-[var(--cds-color-grey-100)] hover:text-[var(--cds-color-grey-800)]"
           aria-label="Close"
         >
@@ -112,26 +203,28 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
 
         {step === 'intro' && (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1d22] to-[#141518] px-6 pb-8 pt-10">
-              <div className="pointer-events-none absolute left-6 top-16 h-2 w-2 rounded-full bg-emerald-400/40 animate-pulse" />
-              <div
-                className="pointer-events-none absolute right-10 top-24 h-2.5 w-2.5 rounded-full bg-white/25 animate-pulse"
-                style={{ animationDelay: '200ms' }}
-              />
-              <div
-                className="pointer-events-none absolute bottom-8 left-1/4 h-1.5 w-1.5 rounded-full bg-emerald-300/35 animate-pulse"
-                style={{ animationDelay: '400ms' }}
-              />
-              <div className="flex justify-center">
-                <div className="animate-float relative">
-                  <img
-                    src={tierSrc}
-                    alt=""
-                    className="h-[100px] w-[100px] object-contain drop-shadow-lg"
-                    loading="eager"
-                    decoding="async"
-                  />
-                </div>
+            <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1d22] to-[#141518] pb-8">
+              <div className="relative aspect-[21/9] min-h-[100px] max-h-[220px] w-full overflow-hidden bg-[#141518]">
+                <img
+                  src={joinHeroSrc}
+                  alt=""
+                  className="h-full w-full object-cover object-top"
+                  loading="eager"
+                  decoding="async"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(20,21,24,0.92)_0%,rgba(20,21,24,0.35)_45%,transparent_100%)]"
+                  aria-hidden
+                />
+                <div className="pointer-events-none absolute left-4 top-4 h-2 w-2 rounded-full bg-emerald-400/40 animate-pulse" />
+                <div
+                  className="pointer-events-none absolute right-8 top-6 h-2.5 w-2.5 rounded-full bg-white/25 animate-pulse"
+                  style={{ animationDelay: '200ms' }}
+                />
+                <div
+                  className="pointer-events-none absolute bottom-4 left-1/4 h-1.5 w-1.5 rounded-full bg-emerald-300/35 animate-pulse"
+                  style={{ animationDelay: '400ms' }}
+                />
               </div>
             </div>
             <div className="space-y-4 px-6 pb-6 pt-2">
@@ -202,13 +295,16 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({ challenge,
             )}
             {challenge.id === 'ch-active-ai-vibe-coding' && (
               <EnrolledCourseMiniCard
-                callout="Suggested course for vibe coding"
+                callout="You've already started a relevant course"
                 imageSrc={VIBE_ENROLLED_COURSE.imageSrc}
                 provider={VIBE_ENROLLED_COURSE.provider}
                 title={VIBE_ENROLLED_COURSE.title}
                 type={VIBE_ENROLLED_COURSE.type}
                 rating={VIBE_ENROLLED_COURSE.rating}
+                completionPercent={VIBE_ENROLLED_COURSE.completionPercent}
                 href={VIBE_ENROLLED_COURSE.href}
+                onCommitJoin={finishJoin}
+                ctaLabel="Let's go!"
               />
             )}
             <div className="mt-6 flex justify-end">

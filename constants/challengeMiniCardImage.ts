@@ -55,3 +55,15 @@ export function resolveChallengeMiniCardImageSrc(challenge: CommunityChallenge):
   if (byId) return byId;
   return MINI_CARD_IMAGE_BY_COHORT[challenge.cohortId] ?? MINI_CARD_IMAGE_BY_COHORT.enrolled;
 }
+
+/** Same visual as the mini-card thumbnail; fit=max keeps full composition (then CSS pins top). */
+const DETAIL_HERO_UNSPLASH_PARAMS = 'w=2400&h=1350&fit=max&auto=format&q=85';
+
+export function resolveChallengeDetailHeroImageSrc(challenge: CommunityChallenge): string {
+  const mini = resolveChallengeMiniCardImageSrc(challenge);
+  const base = mini.split('?')[0]!;
+  if (base.includes('images.unsplash.com')) {
+    return `${base}?${DETAIL_HERO_UNSPLASH_PARAMS}`;
+  }
+  return mini;
+}

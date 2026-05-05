@@ -30,7 +30,7 @@ import {
   type CommunityChallenge,
 } from '../constants/communityChallenges';
 import { mergeCommunityChallengesWithStorage } from '../constants/communityChallengesPersistence';
-import { CHALLENGE_TIER_ART_SRC } from '../constants/challengeTierVisuals';
+import { resolveChallengeMiniCardImageSrc } from '../constants/challengeMiniCardImage';
 import type { CommunitySurface } from './FeedPage';
 
 // Assessment sub-skill results type - matches App.tsx
@@ -400,7 +400,7 @@ function HomeSidebarMiniChallenge({
       : challenge.lifecycle === 'upcoming'
         ? 'bg-amber-500/90 text-white'
         : 'bg-[var(--cds-color-grey-200)] text-[var(--cds-color-grey-800)]';
-  const tierSrc = challenge.cardHeroImageSrc ?? CHALLENGE_TIER_ART_SRC[challenge.visualTier];
+  const thumbSrc = resolveChallengeMiniCardImageSrc(challenge);
   const teamGoalTotal = parseChallengeGoalTotalUnits(challenge);
   const lastTarget = challenge.milestones[challenge.milestones.length - 1]?.target ?? '';
   const unitLabel = lastTarget.match(/\d+\s*(.+)/)?.[1]?.trim() ?? '';
@@ -465,16 +465,14 @@ function HomeSidebarMiniChallenge({
           </p>
         )}
       </div>
-      <div className="flex w-[min(88px,28%)] min-w-[72px] shrink-0 flex-col overflow-hidden rounded-[calc(var(--cds-border-radius-100)-2px)] bg-[#141518]">
-        <div className="relative z-10 flex min-h-[88px] flex-1 items-center justify-center px-2 py-2">
-          <img
-            src={tierSrc}
-            alt=""
-            className="max-h-[min(52px,14vw)] w-full max-w-[3.5rem] object-contain"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
+      <div className="relative h-[88px] w-[min(88px,28%)] min-w-[72px] shrink-0 overflow-hidden rounded-[calc(var(--cds-border-radius-100)-2px)] bg-[var(--cds-color-grey-100)]">
+        <img
+          src={thumbSrc}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-top"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
     </div>
   );

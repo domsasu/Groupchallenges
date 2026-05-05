@@ -254,6 +254,7 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     groupCount: 4,
     groupPlace: 1,
     approxGroupSize: 211,
+    learnerGoalUnits: 25,
     whyJoin:
       'Your cohort is chasing 500 hours of real back-and-forth with the AI coach—talking things through beats passive watching, and every threaded chat nudges the group meter.',
     milestones: [
@@ -340,7 +341,7 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     groupPlace: 3,
     approxGroupSize: 118,
     whyJoin:
-      'Explore five distinct product-design domains as a squad—tokens, research ops, prototyping, accessibility, and critique—without competing across cohorts.',
+      'Explore five distinct product-design domains as a squad—tokens, research ops, prototyping, accessibility, and critique—and compete within your cohort.',
     milestones: [
       { id: 'd1', label: 'Foundations', target: '1 domain' },
       { id: 'd2', label: 'Midpoint', target: '3 domains' },
@@ -372,7 +373,7 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     groupPlace: 1,
     approxGroupSize: 4200,
     whyJoin:
-      'One cohort-wide meter: collectively finish three startup-relevant certificates this quarter—no squads racing each other.',
+      'One cohort-wide meter: collectively finish three startup-relevant certificates this quarter—no squads racing each other. See how many #startups can collect!',
     milestones: [
       { id: 's1', label: 'First cert', target: '1 certificate' },
       { id: 's2', label: 'Momentum', target: '2 certificates' },

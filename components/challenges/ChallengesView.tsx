@@ -148,22 +148,29 @@ export const ChallengesView: React.FC = () => {
     setJoinFlowChallengeId(id);
   }, []);
 
-  const completeJoinChallenge = useCallback((id: string, groupIndex: number) => {
-    markChallengeJoinedViaFlow(id);
-    setChallenges((prev) =>
-      prev.map((c) => {
-        if (c.id !== id) return c;
-        return {
-          ...c,
-          optedIn: true,
-          groupIndex,
-          learnerContributionProgress:
-            c.learnerContributionProgress == null ? 0 : c.learnerContributionProgress,
-        };
-      })
-    );
-    setJoinFlowChallengeId(null);
-  }, []);
+  const completeJoinChallenge = useCallback(
+    (id: string, groupIndex: number, lifecycle?: CommunityChallenge['lifecycle']) => {
+      markChallengeJoinedViaFlow(id);
+      setChallenges((prev) =>
+        prev.map((c) => {
+          if (c.id !== id) return c;
+          return {
+            ...c,
+            optedIn: true,
+            groupIndex,
+            learnerContributionProgress:
+              c.learnerContributionProgress == null ? 0 : c.learnerContributionProgress,
+          };
+        })
+      );
+      setJoinFlowChallengeId(null);
+      if (lifecycle === 'active') {
+        setStatusTab('active');
+      }
+      setSelection({ kind: 'challenge', id });
+    },
+    []
+  );
 
   const handleRequestJoinChallenge = useCallback(
     (challengeId: string, cohortId: FeedCohortId) => {
@@ -185,20 +192,14 @@ export const ChallengesView: React.FC = () => {
     );
   };
 
-  const activeCount = useMemo(
-    () => challenges.filter((c) => c.lifecycle === 'active' && c.optedIn).length,
-    [challenges]
-  );
-
   return (
     <>
     <div className="flex h-[calc(100dvh-5.5rem)] max-h-[calc(100dvh-5.5rem)] min-h-[22rem] w-full flex-col gap-0">
       {/* Airbnb-style filter rails — full width above the two-pane split */}
-      <header className="shrink-0 border-b border-[var(--cds-color-grey-200)] pb-4">
+      <header className="shrink-0 pb-4">
         <ChallengeDiscoveryFilterBar
           statusTab={statusTab}
           onStatusTabChange={setStatusTab}
-          activeJoinedCount={activeCount}
           filters={filters}
           onFiltersChange={setFilters}
         />
@@ -206,11 +207,11 @@ export const ChallengesView: React.FC = () => {
 
       <div className="flex min-h-0 flex-1 flex-col gap-0 lg:flex-row lg:items-stretch lg:gap-0 lg:pt-4">
       <section
-        className="flex min-h-0 w-full min-w-0 flex-1 flex-col border-[var(--cds-color-grey-200)] lg:h-full lg:w-[30%] lg:max-w-[min(100%,380px)] lg:flex-none lg:shrink-0 lg:border-r lg:pr-4"
+        className="flex min-h-0 w-full min-w-0 flex-1 flex-col lg:h-full lg:w-[30%] lg:max-w-[min(100%,380px)] lg:flex-none lg:shrink-0 lg:pr-4"
         aria-label="Challenge discovery"
       >
         <div
-          className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden p-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] custom-scrollbar"
+          className="min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden p-2 [-webkit-overflow-scrolling:touch] custom-scrollbar-thin"
           role="tabpanel"
           aria-labelledby={`challenge-status-${statusTab}`}
         >
@@ -245,7 +246,7 @@ export const ChallengesView: React.FC = () => {
         className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-t border-[var(--cds-color-grey-200)] pt-4 lg:h-full lg:w-[70%] lg:flex-1 lg:border-t-0 lg:border-l-0 lg:pt-0 lg:pl-4"
         aria-label="Challenge details"
       >
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] custom-scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pt-2 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] custom-scrollbar">
         {selection?.kind === 'challenge' && challengeForDetail && (
           <ChallengeFullDetail
             challenge={challengeForDetail}
@@ -319,7 +320,9 @@ export const ChallengesView: React.FC = () => {
       <ChallengeJoinFlow
         challenge={joinFlowChallenge}
         onClose={() => setJoinFlowChallengeId(null)}
-        onComplete={(groupIndex) => completeJoinChallenge(joinFlowChallenge.id, groupIndex)}
+        onComplete={(groupIndex) =>
+          completeJoinChallenge(joinFlowChallenge.id, groupIndex, joinFlowChallenge.lifecycle)
+        }
       />
     )}
     </>
