@@ -4,11 +4,7 @@ import {
   type CommunityChallenge,
 } from './communityChallenges';
 import type { FeedCohortId } from './feedCohorts';
-import type {
-  ChallengeDurationBucket,
-  ChallengeMetric,
-  ChallengeParticipationMode,
-} from './challengeTaxonomy';
+import type { ChallengeMetric, ChallengeParticipationMode } from './challengeTaxonomy';
 
 export type ChallengesStatusTab = 'active' | 'browse' | 'completed';
 
@@ -33,8 +29,6 @@ export interface ChallengeDiscoveryFilters {
   participationModes: ChallengeParticipationMode[];
   /** Empty = all metrics */
   metrics: ChallengeMetric[];
-  /** Empty = all durations */
-  durationBuckets: ChallengeDurationBucket[];
   cohortScope: CohortScopeFilter;
   /** When non-empty, challenge.cohortId must be in this set (in addition to cohortScope). */
   cohortIds: FeedCohortId[];
@@ -43,7 +37,6 @@ export interface ChallengeDiscoveryFilters {
 export const DEFAULT_CHALLENGE_DISCOVERY_FILTERS: ChallengeDiscoveryFilters = {
   participationModes: [],
   metrics: [],
-  durationBuckets: [],
   cohortScope: 'all',
   cohortIds: [],
 };
@@ -81,9 +74,6 @@ export function filterChallengesByDiscovery(
       return false;
     }
     if (filters.metrics.length > 0 && !filters.metrics.includes(c.challengeMetric)) {
-      return false;
-    }
-    if (filters.durationBuckets.length > 0 && !filters.durationBuckets.includes(c.durationBucket)) {
       return false;
     }
     if (filters.cohortScope === 'my_cohorts' && !joinedSet.has(c.cohortId)) {

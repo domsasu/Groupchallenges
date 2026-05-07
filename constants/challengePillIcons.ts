@@ -1,13 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Award,
   BarChart3,
   Calendar,
   CalendarDays,
   CalendarRange,
   Clock,
-  Layers,
-  LayoutGrid,
   Repeat,
   User,
   Users,
@@ -24,9 +21,6 @@ export const CHALLENGE_METRIC_ICONS: Record<ChallengeMetric, LucideIcon> = {
   quantity: BarChart3,
   time: Clock,
   consistency: Repeat,
-  mastery: Award,
-  breadth: LayoutGrid,
-  depth: Layers,
 };
 
 export const PARTICIPATION_MODE_ICONS: Record<ChallengeParticipationMode, LucideIcon> = {

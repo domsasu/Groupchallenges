@@ -79,6 +79,25 @@ export const EnrolledCourseMiniCard: React.FC<EnrolledCourseMiniCardProps> = ({
                   </>
                 )}
               </div>
+              {completionPercent != null ? (
+                <div
+                  className="mt-2 h-1.5 w-full max-w-[min(100%,15rem)] overflow-hidden rounded-full bg-[var(--cds-color-grey-200)]"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(
+                    Math.min(100, Math.max(0, completionPercent))
+                  )}
+                  aria-label={`Course progress ${Math.round(completionPercent)} percent`}
+                >
+                  <div
+                    className="h-full rounded-full bg-[var(--cds-color-green-700)]"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, completionPercent))}%`,
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </a>

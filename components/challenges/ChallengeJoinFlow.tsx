@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
-import { VIBE_ENROLLED_COURSE } from '../../constants/joinFlowEnrolledCourse';
+import {
+  CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW,
+  VIBE_ENROLLED_COURSE,
+} from '../../constants/joinFlowEnrolledCourse';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import { EnrolledCourseMiniCard } from './EnrolledCourseMiniCard';
 import { resolveChallengeMiniCardImageSrc } from '../../constants/challengeMiniCardImage';
@@ -320,22 +323,18 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
                 ctaLabel="Let's go!"
               />
             ) : (
-              <div className="mt-6 rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] p-4">
-                <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Keep your momentum</p>
-                <p className="mt-1 text-sm text-[var(--cds-color-grey-700)]">
-                  This challenge isn&apos;t tied to a single prescribed course. Resume whatever you&apos;re already
-                  learning—your activity counts toward your squad&apos;s goal.
-                </p>
-                {onResumeLearning ? (
-                  <button
-                    type="button"
-                    onClick={resumeCurrentCourseAndFinish}
-                    className="mt-4 w-full rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-                  >
-                    Resume my course
-                  </button>
-                ) : null}
-              </div>
+              <EnrolledCourseMiniCard
+                callout="Your enrolled course — activity here counts toward your squad's goal."
+                imageSrc={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.imageSrc}
+                provider={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.provider}
+                title={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.title}
+                type={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.type}
+                rating={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.rating}
+                completionPercent={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.completionPercent}
+                href={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.href}
+                onCommitJoin={onResumeLearning ? resumeCurrentCourseAndFinish : finishJoin}
+                ctaLabel={onResumeLearning ? 'Resume my course' : 'Continue'}
+              />
             )}
             <div className="mt-6 flex justify-end">
               <button

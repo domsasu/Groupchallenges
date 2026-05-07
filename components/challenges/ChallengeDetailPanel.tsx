@@ -290,16 +290,18 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
         </div>
       )}
 
-      {/* Primary CTAs for active (join) and upcoming (remind / set reminder) live in ChallengeFullDetail hero. */}
-      {!isCompleted && !isUpcoming && optedIn && (
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => onResumeLearning?.()}
-            className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-          >
-            Resume learning
-          </button>
+      {/* Enrolled learners: resume (active only) + leave — hero handles join for browse/upcoming. */}
+      {!isCompleted && optedIn && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-[var(--cds-color-grey-100)] pt-4">
+          {!isUpcoming ? (
+            <button
+              type="button"
+              onClick={() => onResumeLearning?.()}
+              className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+            >
+              Resume learning
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onToggleOptIn}

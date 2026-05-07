@@ -9,3 +9,15 @@ export const VIBE_ENROLLED_COURSE = {
   completionPercent: 32,
   imageSrc: '/challenges/vibe-coding-claude-code-thumb.svg',
 } as const;
+
+/** Mock learner “current” enrollment for generic challenge join recap (matches Home-style trending imagery). */
+export const CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW = {
+  href: 'https://www.coursera.org/professional-certificates/generative-ai-data-science',
+  title: 'Generative AI for Data Scientists',
+  provider: 'IBM',
+  type: 'Professional Certificate',
+  rating: 4.8,
+  completionPercent: 42,
+  imageSrc:
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=400',
+} as const;

@@ -183,7 +183,6 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     let n = 0;
     if (filters.participationModes.length > 0) n++;
     if (filters.metrics.length > 0) n++;
-    if (filters.durationBuckets.length > 0) n++;
     if (filters.cohortScope !== 'all') n++;
     if (filters.cohortIds.length > 0) n++;
     return n;
@@ -367,12 +366,13 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     onScrollLockChange?.(scrollLockedBehindOverlay);
   }, [scrollLockedBehindOverlay, onScrollLockChange]);
 
-  const renderChallengeGrid = (list: CommunityChallenge[]) => (
+  const renderChallengeGrid = (
+    list: CommunityChallenge[],
+    emptyMessage = 'No challenges in this category.'
+  ) => (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {list.length === 0 ? (
-        <p className="col-span-full cds-body-secondary text-[var(--cds-color-grey-600)]">
-          No challenges in this category.
-        </p>
+        <p className="col-span-full cds-body-secondary text-[var(--cds-color-grey-600)]">{emptyMessage}</p>
       ) : (
         list.map((c) => (
           <ChallengeBrowseRowCard
@@ -404,7 +404,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
           <section
             id={CHALLENGE_SECTION_IDS.browse}
             aria-labelledby="challenge-heading-browse"
-            className="scroll-mt-24 md:scroll-mt-28"
+            className="scroll-mt-24 pb-[48pt] md:scroll-mt-28"
           >
             <div className="mb-[24pt]">
               <ChallengeRecommendedStrip
@@ -422,6 +422,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
                   Browse
                 </h2>
               }
+              browsePoolForFacetCounts={browseBase}
               filters={filters}
               onFiltersChange={setFilters}
               activeFilterCount={activeFilterCount}
@@ -435,7 +436,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
           <section
             id={CHALLENGE_SECTION_IDS.active}
             aria-labelledby="challenge-heading-active"
-            className="scroll-mt-24 border-t border-[var(--cds-color-grey-100)] pt-10 md:scroll-mt-28 md:pt-12"
+            className="scroll-mt-24 border-t border-[var(--cds-color-grey-100)] pb-[48pt] pt-10 md:scroll-mt-28 md:pt-12"
           >
             <h2
               id="challenge-heading-active"
@@ -443,7 +444,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
             >
               Active
             </h2>
-            {renderChallengeGrid(activeList)}
+            {renderChallengeGrid(activeList, 'Sign up for a challenge today!')}
           </section>
 
           <section

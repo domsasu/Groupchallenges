@@ -104,15 +104,15 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
             <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-[var(--cds-color-grey-600)]">{oneLiner}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap gap-1">
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--cds-color-grey-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
               <MetricIcon className="h-2.5 w-2.5 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
               {CHALLENGE_METRIC_LABELS[challenge.challengeMetric]}
             </span>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--cds-color-grey-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
               <PartIcon className="h-2.5 w-2.5 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
               {PARTICIPATION_MODE_LABELS[challenge.participationMode]}
             </span>
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-[var(--cds-color-grey-100)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-2 py-0.5 text-[10px] font-medium text-[var(--cds-color-grey-700)]">
               <DurIcon className="h-2.5 w-2.5 shrink-0 opacity-90" aria-hidden strokeWidth={2} />
               {DURATION_BUCKET_LABELS[challenge.durationBucket]}
             </span>
