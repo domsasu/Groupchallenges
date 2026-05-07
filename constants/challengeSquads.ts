@@ -1,4 +1,6 @@
 import type { CommunityChallenge } from './communityChallenges';
+import { FEED_COHORT_META } from './feedCohorts';
+import { isCohortCollectiveChallenge } from './challengeTaxonomy';
 
 /** 1-based group index → colored squad name (prototype squads). */
 export function groupSquadForIndex(g: number): {
@@ -184,12 +186,23 @@ function themeForAiSquadLabel(label: string): { muted: string; active: string } 
 
 /**
  * Squad label + pill styles for a group. **#AIpowered** cohort uses stable pseudo-random “Color + Planet” names.
+ * **Collaborative** (`cohort_collective`) uses a cohort-wide label — never squad animal names.
  */
 export function groupSquadForChallenge(challenge: CommunityChallenge, g: number): {
   label: string;
   muted: string;
   active: string;
 } {
+  if (isCohortCollectiveChallenge(challenge)) {
+    const pill = FEED_COHORT_META[challenge.cohortId].pillLabel;
+    return {
+      label: `All of ${pill}`,
+      muted:
+        'border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] text-[var(--cds-color-grey-800)]',
+      active:
+        'border-[var(--cds-color-blue-500)] bg-[var(--cds-color-blue-25)] text-[var(--cds-color-grey-975)] shadow-sm ring-2 ring-[var(--cds-color-blue-400)]/35',
+    };
+  }
   if (challenge.cohortId === 'ai') {
     if (challenge.id === 'ch-active-ai-vibe-coding') {
       const fixed = VIBE_CHALLENGE_FIXED_SQUADS[g];

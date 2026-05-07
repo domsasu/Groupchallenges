@@ -36,7 +36,10 @@ export interface CommunityChallenge {
   id: string;
   name: string;
   cohortId: FeedCohortId;
-  /** How progress competes or aggregates across the cohort. */
+  /**
+   * How progress competes or aggregates across the cohort.
+   * Use `cohort_collective` with **groupCount: 1** — one shared meter for the whole cohort (no squads).
+   */
   participationMode: ChallengeParticipationMode;
   /** What kind of learning signal the challenge measures. */
   challengeMetric: ChallengeMetric;

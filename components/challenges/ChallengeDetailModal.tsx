@@ -10,6 +10,7 @@ export interface ChallengeDetailModalProps {
   onToggleOptIn: () => void;
   onRequestJoinChallenge: () => void;
   onResumeLearning?: () => void;
+  onShareChallenge?: () => void;
   onOpenShareout?: () => void;
 }
 
@@ -24,6 +25,7 @@ export const ChallengeDetailModal: React.FC<ChallengeDetailModalProps> = ({
   onToggleOptIn,
   onRequestJoinChallenge,
   onResumeLearning,
+  onShareChallenge,
   onOpenShareout,
 }) => {
   return (
@@ -59,6 +61,7 @@ export const ChallengeDetailModal: React.FC<ChallengeDetailModalProps> = ({
           onToggleOptIn={onToggleOptIn}
           onRequestJoinChallenge={onRequestJoinChallenge}
           onResumeLearning={onResumeLearning}
+          onShareChallenge={onShareChallenge}
           onOpenShareout={onOpenShareout}
           onBack={onClose}
         />

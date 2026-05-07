@@ -249,10 +249,7 @@ export const ChallengeDiscoveryFiltersSection: React.FC<ChallengeDiscoveryFilter
         {children}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-4 border-t border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-5 py-3.5">
-        <div className="min-w-0 flex-1">
-          {footerClearAll ?? <span className="inline-block min-h-[1.25rem] w-px opacity-0" aria-hidden />}
-        </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-[8pt] border-t border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-5 py-3.5">
         <button
           type="button"
           className="shrink-0 rounded-md bg-[var(--cds-color-blue-700)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
@@ -260,6 +257,7 @@ export const ChallengeDiscoveryFiltersSection: React.FC<ChallengeDiscoveryFilter
         >
           View
         </button>
+        {footerClearAll ?? null}
       </div>
     </div>
   );

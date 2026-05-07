@@ -351,6 +351,10 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     setDetailModalOpen(false);
   }, []);
 
+  const previewShareChallengeFromBrowse = useCallback(() => {
+    window.alert('Share would open here (preview).');
+  }, []);
+
   useEffect(() => {
     if (!detailModalOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -380,6 +384,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
             challenge={c}
             onOpenDetail={() => openChallengeModal(c.id)}
             onJoin={() => handleRequestJoinChallenge(c.id, c.cohortId)}
+            onShareChallenge={previewShareChallengeFromBrowse}
           />
         ))
       )}
@@ -475,6 +480,9 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
           }
           onResumeLearning={() => {
             window.alert('Resume learning would open your course (preview).');
+          }}
+          onShareChallenge={() => {
+            window.alert('Share would open here (preview).');
           }}
           onOpenShareout={
             challengeForDetail.lifecycle === 'completed' && challengeForDetail.outcome

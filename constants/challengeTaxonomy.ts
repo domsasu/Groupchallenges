@@ -2,6 +2,13 @@
 
 export type ChallengeParticipationMode = 'individual' | 'inner_cohort' | 'cohort_collective';
 
+/** One shared cohort meter — no squads; mocks should use `groupCount: 1`. */
+export function isCohortCollectiveChallenge(c: {
+  participationMode: ChallengeParticipationMode;
+}): boolean {
+  return c.participationMode === 'cohort_collective';
+}
+
 /** Time on task, streak/consistency, or learning items / modules completed */
 export type ChallengeMetric = 'quantity' | 'time' | 'consistency';
 

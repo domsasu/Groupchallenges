@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
-import { formatChallengeCardHeroLabel } from '../../constants/communityChallenges';
+import {
+  formatChallengeCardHeroLabel,
+  formatChallengeParticipantJoinedLine,
+} from '../../constants/communityChallenges';
 import { resolveChallengeDetailHeroImageSrc } from '../../constants/challengeMiniCardImage';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 import { challengeWhyJoinOneLiner } from './challengeListOneLiner';
@@ -163,6 +166,9 @@ function RecommendedStripSlide({
             >
               Join
             </button>
+            <span className="text-[11px] font-medium tabular-nums leading-none text-[var(--cds-color-grey-600)] sm:text-xs">
+              {formatChallengeParticipantJoinedLine(c)}
+            </span>
           </div>
         ) : showDetailsButton ? (
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

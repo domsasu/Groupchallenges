@@ -14,6 +14,7 @@ import {
   CHALLENGE_METRIC_LABELS,
   DURATION_BUCKET_LABELS,
   PARTICIPATION_MODE_LABELS,
+  isCohortCollectiveChallenge,
 } from '../../constants/challengeTaxonomy';
 import {
   CHALLENGE_METRIC_ICONS,
@@ -66,7 +67,9 @@ function GoalSummaryCard({ challenge }: { challenge: CommunityChallenge }) {
         </p>
       </div>
       <div className="px-4 py-3">
-        <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Team goal</p>
+        <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">
+          {isCohortCollectiveChallenge(challenge) ? 'Shared cohort goal' : 'Team goal'}
+        </p>
         <p className="mt-1 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
           {goalTotal}
           <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
@@ -113,6 +116,8 @@ function MilestoneLeaderboard({
     (a, b) => groupProgressTowardFinalGoal(challenge, b) - groupProgressTowardFinalGoal(challenge, a)
   );
 
+  const collective = isCohortCollectiveChallenge(challenge);
+
   const milestoneSummaryForGroup = (g: number, progress01: number): { title: string; subtitle: string | null } => {
     if (goalTotal != null && milestoneCaps.length === challenge.milestones.length) {
       const units = Math.round(Math.min(1, Math.max(0, progress01)) * goalTotal);
@@ -142,16 +147,33 @@ function MilestoneLeaderboard({
     <div className="space-y-3">
       <div className="overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)]">
         <div className="px-4 py-3 sm:px-5">
-          <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Team leaderboard</p>
+          <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">
+            {collective ? 'Cohort progress' : 'Team leaderboard'}
+          </p>
           <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-600)]">
-            Squads ranked by progress toward the team goal
-            {goalTotal != null && unitLabel ? (
+            {collective ? (
               <>
-                {' '}
-                ({goalTotal} {unitLabel})
+                Progress toward the shared cohort goal
+                {goalTotal != null && unitLabel ? (
+                  <>
+                    {' '}
+                    ({goalTotal} {unitLabel})
+                  </>
+                ) : null}
+                .
               </>
-            ) : null}
-            .
+            ) : (
+              <>
+                Squads ranked by progress toward the team goal
+                {goalTotal != null && unitLabel ? (
+                  <>
+                    {' '}
+                    ({goalTotal} {unitLabel})
+                  </>
+                ) : null}
+                .
+              </>
+            )}
           </p>
         </div>
 
@@ -159,8 +181,8 @@ function MilestoneLeaderboard({
           className="hidden items-center gap-3 border-b border-[var(--cds-color-grey-200)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-[var(--cds-color-grey-800)] sm:flex"
           aria-hidden
         >
-          <span className="flex w-6 shrink-0 justify-center">#</span>
-          <span className="min-w-0 flex-1">Team</span>
+          {!collective ? <span className="flex w-6 shrink-0 justify-center">#</span> : null}
+          <span className="min-w-0 flex-1">{collective ? 'Cohort' : 'Team'}</span>
           <span className="w-[9rem] shrink-0">Next milestone</span>
           <span className="w-[7.25rem] shrink-0 text-right">Goal progress</span>
         </div>
@@ -181,12 +203,14 @@ function MilestoneLeaderboard({
                   rankIdx < sortedGroups.length - 1 ? 'border-b border-[var(--cds-color-grey-100)]' : ''
                 } ${isYours ? 'bg-[var(--cds-color-blue-25)]' : ''}`}
               >
-                <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center text-[11px] font-semibold text-[var(--cds-color-grey-500)]"
-                  aria-label={`Rank ${rank}`}
-                >
-                  {rank}
-                </span>
+                {!collective ? (
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center text-[11px] font-semibold text-[var(--cds-color-grey-500)]"
+                    aria-label={`Rank ${rank}`}
+                  >
+                    {rank}
+                  </span>
+                ) : null}
 
                 <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -277,7 +301,9 @@ function UnjoinedGoalPreview({
             </p>
           </div>
           <div className="px-4 py-3">
-            <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">Team goal</p>
+            <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">
+              {isCohortCollectiveChallenge(challenge) ? 'Shared cohort goal' : 'Team goal'}
+            </p>
             <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
               {goalTotal}
               <span className="ml-1 text-sm font-medium text-[var(--cds-color-grey-500)]">{unitLabel}</span>
@@ -322,6 +348,8 @@ export interface ChallengeFullDetailProps {
   userInCohort: boolean;
   onToggleOptIn: () => void;
   onRequestJoinChallenge?: () => void;
+  /** Hero share control next to Join (active/upcoming, not yet opted in). */
+  onShareChallenge?: () => void;
   onOpenShareout?: () => void;
   onResumeLearning?: () => void;
   learnerFirstName?: string;
@@ -336,6 +364,7 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   userInCohort,
   onToggleOptIn,
   onRequestJoinChallenge,
+  onShareChallenge,
   onOpenShareout,
   onResumeLearning,
   learnerFirstName = 'Priya',
@@ -348,6 +377,7 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
 
   const milestoneCaps = parseMilestoneNumericCaps(challenge);
   const learnerGroupSquad = groupSquadForChallenge(challenge, challenge.groupIndex);
+  const collectiveChallenge = isCohortCollectiveChallenge(challenge);
   const joinChallenge = onRequestJoinChallenge ?? onToggleOptIn;
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
   const showJoinCta = (isActive && !optedIn) || (isUpcoming && !optedIn);
@@ -421,15 +451,25 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
           </div>
           {(isActive && !optedIn) || isUpcoming ? (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:items-end">
-              {isActive && !optedIn && (
-                <button
-                  type="button"
-                  onClick={joinChallenge}
-                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-md hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-                >
-                  {joinPrimaryLabel}
-                </button>
-              )}
+              {(isActive && !optedIn) || (isUpcoming && !optedIn) ? (
+                <div className="flex w-full flex-row items-center justify-end gap-2 sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => onShareChallenge?.()}
+                    aria-label="Share challenge"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/45 bg-black/30 text-white shadow-md backdrop-blur-md transition hover:bg-black/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    <Icons.Share className="h-[18px] w-[18px] shrink-0 text-white" aria-hidden strokeWidth={2} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={joinChallenge}
+                    className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-md hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+                  >
+                    {joinPrimaryLabel}
+                  </button>
+                </div>
+              ) : null}
               {isUpcoming && optedIn && (
                 <span
                   className="rounded-[var(--cds-border-radius-100)] border border-white/40 bg-white/90 px-4 py-2 cds-action-secondary text-[var(--cds-color-grey-975)] shadow-md backdrop-blur-[2px]"
@@ -437,15 +477,6 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                 >
                   Joined
                 </span>
-              )}
-              {isUpcoming && !optedIn && (
-                <button
-                  type="button"
-                  onClick={joinChallenge}
-                  className="rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2 cds-action-secondary text-[var(--cds-color-white)] shadow-md hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-                >
-                  {joinPrimaryLabel}
-                </button>
               )}
             </div>
           ) : null}
@@ -483,7 +514,10 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                     {FEED_COHORT_META[challenge.cohortId].pillLabel} cohort challenge winners
                   </p>
                   <p className="mt-2 text-sm font-medium leading-snug text-[var(--cds-color-grey-600)] sm:text-base">
-                    {challenge.completedHeroSubline ?? `Great job ${learnerGroupSquad.label}!`}
+                    {challenge.completedHeroSubline ??
+                      (collectiveChallenge
+                        ? 'Great job contributing to the cohort goal!'
+                        : `Great job ${learnerGroupSquad.label}!`)}
                   </p>
                 </div>
                 {challenge.outcome && (

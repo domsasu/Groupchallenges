@@ -6,9 +6,9 @@ import {
 } from '../../constants/joinFlowEnrolledCourse';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import { EnrolledCourseMiniCard } from './EnrolledCourseMiniCard';
-import { resolveChallengeMiniCardImageSrc } from '../../constants/challengeMiniCardImage';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 import { VIBE_CHALLENGE_ID } from '../../constants/communityChallengesPersistence';
+import { isCohortCollectiveChallenge } from '../../constants/challengeTaxonomy';
 
 export interface ChallengeJoinFlowProps {
   challenge: CommunityChallenge;
@@ -19,7 +19,7 @@ export interface ChallengeJoinFlowProps {
   onResumeLearning?: () => void;
 }
 
-type Step = 'intro' | 'assign' | 'recap';
+type Step = 'assign' | 'recap';
 
 function parseChallengeLocalDate(isoDate: string): Date {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
@@ -28,7 +28,8 @@ function parseChallengeLocalDate(isoDate: string): Date {
 }
 
 /**
- * Three-step modal: intro (tier art), animated squad assignment, recap with goal + tips + CTAs.
+ * Join modal: optional squad placement (multi-squad challenges), then recap with tips + CTAs.
+ * Single-squad challenges skip placement and open directly on recap.
  */
 export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
   challenge,
@@ -38,10 +39,12 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
 }) => {
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
   const isUpcoming = challenge.lifecycle === 'upcoming';
-  const joinHeroSrc = resolveChallengeMiniCardImageSrc(challenge);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const [step, setStep] = useState<Step>('intro');
+  const multiSquad = challenge.groupCount > 1;
+  const [step, setStep] = useState<Step>(() => (multiSquad ? 'assign' : 'recap'));
+  /** User tapped Assign — starts cycling animation (multi-squad only). */
+  const [placementStarted, setPlacementStarted] = useState(() => !multiSquad);
   const [cycleDisplayIndex, setCycleDisplayIndex] = useState(1);
   /** Rolled when this dialog mounts — parent does not opt in until `onComplete` runs. */
   const [targetGroupIndex] = useState(() => Math.floor(Math.random() * challenge.groupCount) + 1);
@@ -55,9 +58,11 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
     : null;
 
   useEffect(() => {
-    setStep('intro');
+    const multi = challenge.groupCount > 1;
+    setStep(multi ? 'assign' : 'recap');
+    setPlacementStarted(!multi);
     setCycleDisplayIndex(1);
-  }, [challenge.id]);
+  }, [challenge.id, challenge.groupCount]);
 
   const ensureAudioContext = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -139,13 +144,13 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
     };
   }, []);
 
-  const handleStartIntro = useCallback(() => {
+  const startPlacement = useCallback(() => {
     ensureAudioContext();
-    setStep('assign');
+    setPlacementStarted(true);
   }, [ensureAudioContext]);
 
   useEffect(() => {
-    if (step !== 'assign' || targetGroupIndex < 1) return;
+    if (step !== 'assign' || !placementStarted || targetGroupIndex < 1) return;
 
     let tick = 0;
     const interval = setInterval(() => {
@@ -167,7 +172,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
       clearTimeout(land);
       clearTimeout(toRecap);
     };
-  }, [step, targetGroupIndex, challenge.groupCount]);
+  }, [step, placementStarted, targetGroupIndex, challenge.groupCount]);
 
   const finishJoin = useCallback(() => {
     if (targetGroupIndex < 1) return;
@@ -175,7 +180,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
     onClose();
   }, [targetGroupIndex, onComplete, onClose]);
 
-  /** On recap, dismissing still commits the join (same as primary CTAs). Earlier steps cancel without joining. */
+  /** On recap, dismissing still commits the join (same as primary CTAs). Assign (before placement) closes without joining. */
   const handleDismiss = useCallback(() => {
     if (step === 'recap' && targetGroupIndex >= 1) {
       finishJoin();
@@ -191,6 +196,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
 
   const tips = challenge.steps.slice(0, 3);
   const assignSquad = groupSquadForChallenge(challenge, cycleDisplayIndex);
+  const recapSquad = groupSquadForChallenge(challenge, targetGroupIndex);
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -217,65 +223,37 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
           </svg>
         </button>
 
-        {step === 'intro' && (
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-            <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1d22] to-[#141518] pb-8">
-              <div className="relative aspect-[21/9] min-h-[100px] max-h-[220px] w-full overflow-hidden bg-[#141518]">
-                <img
-                  src={joinHeroSrc}
-                  alt=""
-                  className="h-full w-full object-cover object-top"
-                  loading="eager"
-                  decoding="async"
-                />
-                <div
-                  className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(20,21,24,0.92)_0%,rgba(20,21,24,0.35)_45%,transparent_100%)]"
-                  aria-hidden
-                />
-                <div className="pointer-events-none absolute left-4 top-4 h-2 w-2 rounded-full bg-emerald-400/40 animate-pulse" />
-                <div
-                  className="pointer-events-none absolute right-8 top-6 h-2.5 w-2.5 rounded-full bg-white/25 animate-pulse"
-                  style={{ animationDelay: '200ms' }}
-                />
-                <div
-                  className="pointer-events-none absolute bottom-4 left-1/4 h-1.5 w-1.5 rounded-full bg-emerald-300/35 animate-pulse"
-                  style={{ animationDelay: '400ms' }}
-                />
-              </div>
-            </div>
-            <div className="space-y-4 px-6 pb-6 pt-2">
-              <p className="text-center text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
-                {cohortMeta.pillLabel}
-              </p>
-              <h2 id="challenge-join-flow-title" className="text-center text-xl font-bold text-[var(--cds-color-grey-975)]">
-                {challenge.name}
-              </h2>
-              <p className="cds-body-secondary text-center text-[var(--cds-color-grey-700)]">{challenge.whyJoin}</p>
-              {isUpcoming && startDateLabel && (
-                <p className="rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-center text-sm text-amber-950">
-                  This challenge starts <strong>{startDateLabel}</strong>. You can join now—we’ll place you in a squad;
-                  rankings go live when the challenge begins.
-                </p>
-              )}
-              {!isUpcoming && (
-                <p className="text-center text-sm text-[var(--cds-color-grey-600)]">
-                  You’ll join learners in <strong>{cohortMeta.pillLabel}</strong>, split into separate squads that
-                  compete on one shared goal.
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={handleStartIntro}
-                className="mt-2 w-full rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-              >
-                Start challenge
-              </button>
-            </div>
+        {step === 'assign' && targetGroupIndex >= 1 && !placementStarted && multiSquad ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-10">
+            <p className="text-center text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
+              {cohortMeta.pillLabel}
+            </p>
+            <h2
+              id="challenge-join-flow-title"
+              className="mt-2 text-center text-xl font-bold leading-snug text-[var(--cds-color-grey-975)]"
+            >
+              {challenge.name}
+            </h2>
+            <p className="mt-3 text-center text-sm leading-relaxed text-[var(--cds-color-grey-700)]">{challenge.whyJoin}</p>
+            <p className="mt-4 max-w-sm self-center text-center text-sm text-[var(--cds-color-grey-700)]">
+              The cohort is divided into <strong>{challenge.groupCount} squads</strong>. Tap <strong>Assign</strong> to
+              find your team.
+            </p>
+            <button
+              type="button"
+              onClick={startPlacement}
+              className="mt-6 w-full rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+            >
+              Assign
+            </button>
           </div>
-        )}
+        ) : null}
 
-        {step === 'assign' && targetGroupIndex >= 1 && (
+        {step === 'assign' && targetGroupIndex >= 1 && placementStarted ? (
           <div className="flex flex-col items-center px-6 pb-10 pt-12">
+            <h2 id="challenge-join-flow-title" className="sr-only">
+              {challenge.name}
+            </h2>
             <p className="max-w-sm text-center text-sm text-[var(--cds-color-grey-700)]">
               The cohort is divided into <strong>{challenge.groupCount} squads</strong>. Each squad competes toward the
               same goal—we’re finding your team…
@@ -287,18 +265,36 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
             </div>
             <p className="mt-6 text-center text-xs text-[var(--cds-color-grey-500)]">Placing you…</p>
           </div>
-        )}
+        ) : null}
 
         {step === 'recap' && targetGroupIndex >= 1 && (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-8">
+            <h2 id="challenge-join-flow-title" className="sr-only">
+              {challenge.name}
+            </h2>
             <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">You’re in</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
+                {isCohortCollectiveChallenge(challenge) ? 'You’re contributing' : 'You’re in'}
+              </p>
               <div
-                className={`mx-auto mt-2 inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold ${groupSquadForChallenge(challenge, targetGroupIndex).active}`}
+                className={`mx-auto mt-2 inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold ${recapSquad.active}`}
               >
-                {groupSquadForChallenge(challenge, targetGroupIndex).label}
+                {recapSquad.label}
               </div>
+              {isCohortCollectiveChallenge(challenge) ? (
+                <p className="mt-2 max-w-sm mx-auto text-sm leading-relaxed text-[var(--cds-color-grey-700)]">
+                  One shared goal for this cohort — everyone adds to the same meter.
+                </p>
+              ) : null}
             </div>
+            {isUpcoming && startDateLabel ? (
+              <p className="mt-6 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2 text-center text-sm text-amber-950">
+                This challenge starts <strong>{startDateLabel}</strong>.{' '}
+                {isCohortCollectiveChallenge(challenge)
+                  ? 'Cohort progress and the shared meter start when the challenge begins.'
+                  : 'Rankings go live when the challenge begins.'}
+              </p>
+            ) : null}
             {tips.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Ways to get started</h3>
@@ -324,7 +320,11 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
               />
             ) : (
               <EnrolledCourseMiniCard
-                callout="Your enrolled course — activity here counts toward your squad's goal."
+                callout={
+                  isCohortCollectiveChallenge(challenge)
+                    ? "Your enrolled course — activity here counts toward your cohort's shared goal."
+                    : "Your enrolled course — activity here counts toward your squad's goal."
+                }
                 imageSrc={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.imageSrc}
                 provider={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.provider}
                 title={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.title}

@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { approxHeadcountForGroup, type CommunityChallenge } from '../../constants/communityChallenges';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
+import { isCohortCollectiveChallenge } from '../../constants/challengeTaxonomy';
 import { Icons } from '../Icons';
 
 /** Stable mock stats per team for preview charts (deterministic from challenge + group). */
@@ -125,6 +126,7 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
   }, [teamRosterOpen, rosterStats.length, reduceMotion]);
   const maxHours = Math.max(1, ...rosterStats.map((r) => r.stats.hours));
   const maxActivities = Math.max(1, ...rosterStats.map((r) => r.stats.activities));
+  const collectiveChallenge = isCohortCollectiveChallenge(challenge);
 
   /** Fire as soon as a completed challenge with an outcome is shown (e.g. Completed tab), no scroll or delay. */
   useEffect(() => {
@@ -162,7 +164,15 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <p className="cds-body-secondary min-w-0 flex-1 text-[var(--cds-color-grey-975)]">
-              Your group placed <strong>1st</strong> out of {challenge.groupCount} teams.
+              {collectiveChallenge ? (
+                <>
+                  Everyone in your cohort worked toward <strong>one shared goal</strong> — thanks for contributing.
+                </>
+              ) : (
+                <>
+                  Your group placed <strong>1st</strong> out of {challenge.groupCount} teams.
+                </>
+              )}
             </p>
             <button
               type="button"
@@ -172,7 +182,7 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
               onClick={() => setTeamRosterOpen((o) => !o)}
               className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] px-3 py-2 text-left cds-action-secondary text-[var(--cds-color-grey-975)] shadow-sm transition-[transform,box-shadow,background-color] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)] active:scale-[0.98]"
             >
-              View team
+              {collectiveChallenge ? 'View cohort' : 'View team'}
               <Icons.ChevronDown
                 className={`h-4 w-4 shrink-0 text-[var(--cds-color-grey-600)] transition-transform duration-300 ease-out ${teamRosterOpen ? 'rotate-180' : ''}`}
                 aria-hidden
@@ -225,11 +235,13 @@ export const ChallengeDetailPanel: React.FC<ChallengeDetailPanelProps> = ({
                             {squad.label}
                           </span>
                           {isYours ? (
-                            <span className="text-[11px] font-medium text-[var(--cds-color-blue-800)]">your team</span>
+                            <span className="text-[11px] font-medium text-[var(--cds-color-blue-800)]">
+                              {collectiveChallenge ? 'your cohort' : 'your team'}
+                            </span>
                           ) : null}
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-                          {!isYours ? (
+                          {!isYours && !collectiveChallenge ? (
                             <span className="text-[10px] font-medium text-[var(--cds-color-grey-500)]">Team {g}</span>
                           ) : null}
                           <span
