@@ -777,7 +777,7 @@ const App: React.FC = () => {
         }
       />
       
-      <div className="flex flex-1 overflow-hidden relative bg-[var(--cds-color-white)]">
+      <div className="flex min-h-0 flex-1 overflow-hidden relative bg-[var(--cds-color-white)]">
         {currentView === 'home' && (
           <Home 
             onResume={handleResumeClick} 

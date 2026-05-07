@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
 import {
   CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW,
@@ -8,7 +9,10 @@ import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import { EnrolledCourseMiniCard } from './EnrolledCourseMiniCard';
 import { FEED_COHORT_META } from '../../constants/feedCohorts';
 import { VIBE_CHALLENGE_ID } from '../../constants/communityChallengesPersistence';
-import { isCohortCollectiveChallenge } from '../../constants/challengeTaxonomy';
+import {
+  isCohortCollectiveChallenge,
+  isIndividualChallenge,
+} from '../../constants/challengeTaxonomy';
 
 export interface ChallengeJoinFlowProps {
   challenge: CommunityChallenge;
@@ -21,6 +25,8 @@ export interface ChallengeJoinFlowProps {
 
 type Step = 'assign' | 'recap';
 
+const JOIN_FLOW_Z = 2147483646;
+
 function parseChallengeLocalDate(isoDate: string): Date {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
   if (!m) return new Date(isoDate);
@@ -28,8 +34,8 @@ function parseChallengeLocalDate(isoDate: string): Date {
 }
 
 /**
- * Join modal: optional squad placement (multi-squad challenges), then recap with tips + CTAs.
- * Single-squad challenges skip placement and open directly on recap.
+ * Join modal: optional squad placement (`inner_cohort` with multiple squads), then recap with tips + CTAs.
+ * Solo, collective, and single-squad challenges skip placement and open directly on recap.
  */
 export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
   challenge,
@@ -41,13 +47,15 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
   const isUpcoming = challenge.lifecycle === 'upcoming';
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const multiSquad = challenge.groupCount > 1;
-  const [step, setStep] = useState<Step>(() => (multiSquad ? 'assign' : 'recap'));
+  const showSquadAssignment =
+    challenge.participationMode === 'inner_cohort' && challenge.groupCount > 1;
+
+  const [step, setStep] = useState<Step>(() => (showSquadAssignment ? 'assign' : 'recap'));
   /** User tapped Assign — starts cycling animation (multi-squad only). */
-  const [placementStarted, setPlacementStarted] = useState(() => !multiSquad);
+  const [placementStarted, setPlacementStarted] = useState(() => !showSquadAssignment);
   const [cycleDisplayIndex, setCycleDisplayIndex] = useState(1);
-  /** Rolled when this dialog mounts — parent does not opt in until `onComplete` runs. */
-  const [targetGroupIndex] = useState(() => Math.floor(Math.random() * challenge.groupCount) + 1);
+  /** Rolled when placement runs — parent does not opt in until `onComplete` runs. Always `1` when no squad assignment. */
+  const [targetGroupIndex, setTargetGroupIndex] = useState(1);
 
   const startDateLabel = isUpcoming
     ? parseChallengeLocalDate(challenge.startsAt).toLocaleDateString(undefined, {
@@ -58,11 +66,14 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
     : null;
 
   useEffect(() => {
-    const multi = challenge.groupCount > 1;
-    setStep(multi ? 'assign' : 'recap');
-    setPlacementStarted(!multi);
+    const assign = challenge.participationMode === 'inner_cohort' && challenge.groupCount > 1;
+    setStep(assign ? 'assign' : 'recap');
+    setPlacementStarted(!assign);
     setCycleDisplayIndex(1);
-  }, [challenge.id, challenge.groupCount]);
+    setTargetGroupIndex(
+      assign ? Math.floor(Math.random() * challenge.groupCount) + 1 : 1
+    );
+  }, [challenge.id, challenge.participationMode, challenge.groupCount]);
 
   const ensureAudioContext = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -198,8 +209,11 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
   const assignSquad = groupSquadForChallenge(challenge, cycleDisplayIndex);
   const recapSquad = groupSquadForChallenge(challenge, targetGroupIndex);
 
-  return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+  const overlay = (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: JOIN_FLOW_Z }}
+    >
       <div
         className="absolute inset-0 bg-[var(--cds-color-grey-975)]/60 backdrop-blur-sm"
         aria-hidden
@@ -223,7 +237,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
           </svg>
         </button>
 
-        {step === 'assign' && targetGroupIndex >= 1 && !placementStarted && multiSquad ? (
+        {step === 'assign' && targetGroupIndex >= 1 && !placementStarted && showSquadAssignment ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-10">
             <p className="text-center text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
               {cohortMeta.pillLabel}
@@ -273,17 +287,23 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
               {challenge.name}
             </h2>
             <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
-                {isCohortCollectiveChallenge(challenge) ? 'You’re contributing' : 'You’re in'}
+              <p className="text-xs font-semibold text-[var(--cds-color-grey-500)]">
+                {isCohortCollectiveChallenge(challenge)
+                  ? 'You’re enrolled!'
+                  : isIndividualChallenge(challenge)
+                    ? 'You’re competing'
+                    : 'You’re in cohort group'}
               </p>
               <div
                 className={`mx-auto mt-2 inline-flex items-center rounded-full border px-4 py-2 text-sm font-bold ${recapSquad.active}`}
               >
-                {recapSquad.label}
+                {isCohortCollectiveChallenge(challenge)
+                  ? `${cohortMeta.label} · Collaborative effort`
+                  : recapSquad.label}
               </div>
-              {isCohortCollectiveChallenge(challenge) ? (
+              {isIndividualChallenge(challenge) ? (
                 <p className="mt-2 max-w-sm mx-auto text-sm leading-relaxed text-[var(--cds-color-grey-700)]">
-                  One shared goal for this cohort — everyone adds to the same meter.
+                  You’re on your own — no teams. Your activity moves you on the cohort leaderboard.
                 </p>
               ) : null}
             </div>
@@ -292,7 +312,9 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
                 This challenge starts <strong>{startDateLabel}</strong>.{' '}
                 {isCohortCollectiveChallenge(challenge)
                   ? 'Cohort progress and the shared meter start when the challenge begins.'
-                  : 'Rankings go live when the challenge begins.'}
+                  : isIndividualChallenge(challenge)
+                    ? 'Individual rankings and your place on the cohort leaderboard update when the challenge begins.'
+                    : 'Rankings go live when the challenge begins.'}
               </p>
             ) : null}
             {tips.length > 0 && (
@@ -323,7 +345,9 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
                 callout={
                   isCohortCollectiveChallenge(challenge)
                     ? "Your enrolled course — activity here counts toward your cohort's shared goal."
-                    : "Your enrolled course — activity here counts toward your squad's goal."
+                    : isIndividualChallenge(challenge)
+                      ? 'Your enrolled course — activity here counts toward your standing on the cohort leaderboard.'
+                      : "Your enrolled course — activity here counts toward your squad's goal."
                 }
                 imageSrc={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.imageSrc}
                 provider={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.provider}
@@ -333,7 +357,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
                 completionPercent={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.completionPercent}
                 href={CURRENT_ENROLLED_COURSE_FOR_JOIN_FLOW.href}
                 onCommitJoin={onResumeLearning ? resumeCurrentCourseAndFinish : finishJoin}
-                ctaLabel={onResumeLearning ? 'Resume my course' : 'Continue'}
+                ctaLabel={onResumeLearning ? 'Resume' : 'Continue'}
               />
             )}
             <div className="mt-6 flex justify-end">
@@ -352,4 +376,7 @@ export const ChallengeJoinFlow: React.FC<ChallengeJoinFlowProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return overlay;
+  return createPortal(overlay, document.body);
 };

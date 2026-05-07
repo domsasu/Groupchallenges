@@ -39,6 +39,9 @@ export interface CommunityChallenge {
   /**
    * How progress competes or aggregates across the cohort.
    * Use `cohort_collective` with **groupCount: 1** — one shared meter for the whole cohort (no squads).
+   * **`individual`**: learners compete solo on a cohort leaderboard — **not** squad-split; `groupCount` /
+   * `groupsAtMilestoneTier` on mocks may be legacy. Prefer **`outcome.userRank`** (completed) or **`groupPlace`**
+   * (active/upcoming) as the learner’s cohort rank for UI.
    */
   participationMode: ChallengeParticipationMode;
   /** What kind of learning signal the challenge measures. */
@@ -434,7 +437,7 @@ export const MOCK_COMMUNITY_CHALLENGES: CommunityChallenge[] = [
     lifecycle: 'completed',
     groupIndex: 1,
     groupCount: 12,
-    groupPlace: 5,
+    groupPlace: 14,
     approxGroupSize: 198,
     whyJoin:
       'Individual leaderboard: learners logged touchpoints across paid, organic, lifecycle, and partner channels.',
@@ -484,6 +487,102 @@ function stablePseudoParticipantCountForJoinedLine(challenge: CommunityChallenge
   }
   const abs = Math.abs(h);
   return 320 + (abs % 9200) + Math.min(600, challenge.approxGroupSize * 4);
+}
+
+/** Participant headcount for leaderboard chrome (matches browse “joined” estimate when unset). */
+export function cohortParticipantEstimateForChallenge(challenge: CommunityChallenge): number {
+  return challenge.participantCount ?? stablePseudoParticipantCountForJoinedLine(challenge);
+}
+
+/** Completed challenges: `outcome.userRank`; otherwise mock cohort rank from `groupPlace`. */
+export function soloLearnerRankForChallenge(challenge: CommunityChallenge): number {
+  return challenge.outcome?.userRank ?? challenge.groupPlace;
+}
+
+function soloProgress01ForRank(rank: number, cohortSize: number): number {
+  if (cohortSize <= 1) return 0.72;
+  return 0.08 + ((cohortSize - rank) / (cohortSize - 1)) * 0.87;
+}
+
+const SOLO_LB_FIRST = [
+  'Maya',
+  'Ravi',
+  'Sam',
+  'Zoe',
+  'Alex',
+  'Jordan',
+  'Priya',
+  'Casey',
+] as const;
+const SOLO_LB_LAST = [
+  'Chen',
+  'Patel',
+  'Okonkwo',
+  'Martin',
+  'Kim',
+  'Rivera',
+  'Nguyen',
+  'Brown',
+] as const;
+
+function stableHashSolo(parts: string[]): number {
+  let h = 0;
+  const s = parts.join('\0');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+/** Deterministic mock learner name for solo leaderboard rows (not the current user). */
+export function mockSoloLeaderboardDisplayName(challengeId: string, rank: number): string {
+  const hv = stableHashSolo([challengeId, String(rank), 'solo-lb']);
+  return `${SOLO_LB_FIRST[hv % SOLO_LB_FIRST.length]} ${SOLO_LB_LAST[(hv >> 5) % SOLO_LB_LAST.length]}`;
+}
+
+export type SoloLeaderboardRow = {
+  rank: number;
+  displayLabel: string;
+  progress01: number;
+  isYou: boolean;
+};
+
+/**
+ * Top `min(5, cohortSize)` ranks plus an extra “You” row when opted in and rank is outside the top 5.
+ */
+export function buildSoloLeaderboardRows(
+  challenge: CommunityChallenge,
+  opts: { optedIn: boolean }
+): { top: SoloLeaderboardRow[]; yours?: SoloLeaderboardRow } {
+  const cohortSize = Math.max(1, cohortParticipantEstimateForChallenge(challenge));
+  const rawRank = soloLearnerRankForChallenge(challenge);
+  const userRank = Math.min(Math.max(1, rawRank), cohortSize);
+  const topCount = Math.min(5, cohortSize);
+
+  const top: SoloLeaderboardRow[] = [];
+  for (let r = 1; r <= topCount; r++) {
+    const isYou = opts.optedIn && r === userRank;
+    const progress01 =
+      isYou && challenge.learnerContributionProgress != null
+        ? Math.min(1, Math.max(0, challenge.learnerContributionProgress))
+        : soloProgress01ForRank(r, cohortSize);
+    const displayLabel = isYou ? 'You' : mockSoloLeaderboardDisplayName(challenge.id, r);
+    top.push({ rank: r, displayLabel, progress01, isYou });
+  }
+
+  let yours: SoloLeaderboardRow | undefined;
+  if (opts.optedIn && userRank > 5) {
+    const progress01 =
+      challenge.learnerContributionProgress != null
+        ? Math.min(1, Math.max(0, challenge.learnerContributionProgress))
+        : soloProgress01ForRank(userRank, cohortSize);
+    yours = {
+      rank: userRank,
+      displayLabel: 'You',
+      progress01,
+      isYou: true,
+    };
+  }
+
+  return { top, yours };
 }
 
 /**

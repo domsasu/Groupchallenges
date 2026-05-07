@@ -1,6 +1,6 @@
 import type { CommunityChallenge } from './communityChallenges';
 import { FEED_COHORT_META } from './feedCohorts';
-import { isCohortCollectiveChallenge } from './challengeTaxonomy';
+import { isCohortCollectiveChallenge, isIndividualChallenge } from './challengeTaxonomy';
 
 /** 1-based group index → colored squad name (prototype squads). */
 export function groupSquadForIndex(g: number): {
@@ -187,8 +187,9 @@ function themeForAiSquadLabel(label: string): { muted: string; active: string } 
 /**
  * Squad label + pill styles for a group. **#AIpowered** cohort uses stable pseudo-random “Color + Planet” names.
  * **Collaborative** (`cohort_collective`) uses a cohort-wide label — never squad animal names.
+ * **Solo** (`individual`) uses a fixed cohort-scoped label — never animal squad names.
  */
-export function groupSquadForChallenge(challenge: CommunityChallenge, g: number): {
+export function groupSquadForChallenge(challenge: CommunityChallenge, _g: number): {
   label: string;
   muted: string;
   active: string;
@@ -203,14 +204,24 @@ export function groupSquadForChallenge(challenge: CommunityChallenge, g: number)
         'border-[var(--cds-color-blue-500)] bg-[var(--cds-color-blue-25)] text-[var(--cds-color-grey-975)] shadow-sm ring-2 ring-[var(--cds-color-blue-400)]/35',
     };
   }
+  if (isIndividualChallenge(challenge)) {
+    const pill = FEED_COHORT_META[challenge.cohortId].pillLabel;
+    return {
+      label: `Solo · ${pill}`,
+      muted:
+        'border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] text-[var(--cds-color-grey-800)]',
+      active:
+        'border-[var(--cds-color-blue-500)] bg-[var(--cds-color-blue-25)] text-[var(--cds-color-grey-975)] shadow-sm ring-2 ring-[var(--cds-color-blue-400)]/35',
+    };
+  }
   if (challenge.cohortId === 'ai') {
     if (challenge.id === 'ch-active-ai-vibe-coding') {
-      const fixed = VIBE_CHALLENGE_FIXED_SQUADS[g];
+      const fixed = VIBE_CHALLENGE_FIXED_SQUADS[_g];
       if (fixed) return fixed;
     }
-    const label = aiColorPlanetLabel(challenge.id, g);
+    const label = aiColorPlanetLabel(challenge.id, _g);
     const theme = themeForAiSquadLabel(label);
     return { label, muted: theme.muted, active: theme.active };
   }
-  return groupSquadForIndex(g);
+  return groupSquadForIndex(_g);
 }

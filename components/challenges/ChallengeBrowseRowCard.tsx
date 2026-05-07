@@ -185,9 +185,9 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
                   onShareChallenge();
                 }}
                 aria-label="Share challenge"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--cds-color-grey-300)] bg-[var(--cds-color-white)] text-[var(--cds-color-grey-800)] shadow-[inset_0_0_0_1px_var(--cds-color-grey-300)] transition hover:bg-[var(--cds-color-grey-25)] hover:shadow-[inset_0_0_0_1px_var(--cds-color-grey-400)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--cds-color-white)] text-[var(--cds-color-grey-975)] shadow-[inset_0_0_0_1px_var(--cds-color-grey-300)] transition hover:bg-[var(--cds-color-grey-25)] hover:shadow-[inset_0_0_0_1px_var(--cds-color-grey-400)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
               >
-                <Icons.Share className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2} />
+                <Icons.Share className="h-4 w-4 shrink-0" aria-hidden strokeWidth={1.5} />
               </button>
             ) : null}
             <button

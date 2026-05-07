@@ -128,8 +128,11 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
 
   const [detailModalOpen, setDetailModalOpen] = useState(() => Boolean(initialOpenChallengeId));
 
-  /** Skip the first filter sync that would close the deep-linked detail modal. */
+  /** Skip the first list sync pass for deep-linked detail (selection hydration). */
   const skipNextFilterSyncCloseRef = useRef(Boolean(initialOpenChallengeId));
+
+  /** Close detail only when discovery filters actually change (not when lists are recomputed). */
+  const prevDiscoveryFiltersKeyRef = useRef<string | null>(null);
 
   const [activeSection, setActiveSection] = useState<ChallengesStatusTab>('browse');
 
@@ -193,6 +196,11 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     return challenges.find((c) => c.id === selection.id) ?? null;
   }, [selection, challenges]);
 
+  /** Scroll lock only while the detail surface is actually mounted (avoids blank/black view if flag/list drift). */
+  const challengeDetailSurfaceOpen = Boolean(
+    detailModalOpen && selection?.kind === 'challenge' && challengeForDetail
+  );
+
   const onJump = useCallback((tab: ChallengesStatusTab) => {
     scrollToChallengeSection(tab);
   }, []);
@@ -242,7 +250,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     });
   }, []);
 
-  /** When filters or lists change, keep selection if it still appears in any section; else pick a fallback. Close detail modal except first sync after deep link. */
+  /** When browse/active/completed lists change, keep selection valid (do not close detail modal here). */
   useEffect(() => {
     const syncSelection = () => {
       setSelection((prev) => {
@@ -266,9 +274,20 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
       return;
     }
 
-    setDetailModalOpen(false);
     syncSelection();
-  }, [filters, browseList, activeList, completedList]);
+  }, [browseList, activeList, completedList]);
+
+  /** Closing on every list refresh was dropping the detail overlay immediately after open; only close when filters change. */
+  useEffect(() => {
+    const key = JSON.stringify(filters);
+    if (prevDiscoveryFiltersKeyRef.current === null) {
+      prevDiscoveryFiltersKeyRef.current = key;
+      return;
+    }
+    if (prevDiscoveryFiltersKeyRef.current === key) return;
+    prevDiscoveryFiltersKeyRef.current = key;
+    setDetailModalOpen(false);
+  }, [filters]);
 
   const toggleOptedIn = useCallback((id: string) => {
     setChallenges((prev) => {
@@ -364,7 +383,15 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     return () => document.removeEventListener('keydown', onKey);
   }, [detailModalOpen, closeDetailModal]);
 
-  const scrollLockedBehindOverlay = detailModalOpen || joinFlowChallengeId != null;
+  /** Drop open flag if the selected challenge no longer resolves (keeps UI and scroll lock in sync). */
+  useEffect(() => {
+    if (detailModalOpen && !challengeForDetail) {
+      setDetailModalOpen(false);
+    }
+  }, [detailModalOpen, challengeForDetail]);
+
+  const scrollLockedBehindOverlay =
+    challengeDetailSurfaceOpen || joinFlowChallengeId != null;
 
   useEffect(() => {
     onScrollLockChange?.(scrollLockedBehindOverlay);

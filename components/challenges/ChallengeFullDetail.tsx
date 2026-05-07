@@ -2,12 +2,14 @@ import React from 'react';
 import type { CommunityChallenge } from '../../constants/communityChallenges';
 import {
   approxHeadcountForGroup,
+  buildSoloLeaderboardRows,
   formatChallengeCardHeroLabel,
   formatProgressGoalQuantityLineForFraction,
   getGroupProgressTowardGoal,
   parseChallengeGoalTotalUnits,
   parseMilestoneNumericCaps,
   tierColumnIndexForCompletedUnits,
+  type SoloLeaderboardRow,
 } from '../../constants/communityChallenges';
 import { groupSquadForChallenge } from '../../constants/challengeSquads';
 import {
@@ -15,6 +17,7 @@ import {
   DURATION_BUCKET_LABELS,
   PARTICIPATION_MODE_LABELS,
   isCohortCollectiveChallenge,
+  isIndividualChallenge,
 } from '../../constants/challengeTaxonomy';
 import {
   CHALLENGE_METRIC_ICONS,
@@ -68,7 +71,11 @@ function GoalSummaryCard({ challenge }: { challenge: CommunityChallenge }) {
       </div>
       <div className="px-4 py-3">
         <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">
-          {isCohortCollectiveChallenge(challenge) ? 'Shared cohort goal' : 'Team goal'}
+          {isCohortCollectiveChallenge(challenge)
+            ? 'Shared cohort goal'
+            : isIndividualChallenge(challenge)
+              ? 'Challenge goal'
+              : 'Team goal'}
         </p>
         <p className="mt-1 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
           {goalTotal}
@@ -94,6 +101,144 @@ function groupProgressTowardFinalGoal(challenge: CommunityChallenge, groupNumber
   return 0;
 }
 
+/** Solo mode: top cohort learners + optional “You” row below rank 5. */
+function IndividualLeaderboard({
+  challenge,
+  optedIn,
+  milestoneCaps,
+}: {
+  challenge: CommunityChallenge;
+  optedIn: boolean;
+  milestoneCaps: number[];
+}) {
+  const lastTarget = challenge.milestones[challenge.milestones.length - 1]?.target;
+  const unitLabel = extractUnitLabel(lastTarget);
+  const goalTotal = parseChallengeGoalTotalUnits(challenge);
+  const { top, yours } = buildSoloLeaderboardRows(challenge, { optedIn });
+
+  const milestoneSummaryForProgress = (progress01: number): { title: string; subtitle: string | null } => {
+    if (goalTotal != null && milestoneCaps.length === challenge.milestones.length) {
+      const units = Math.round(Math.min(1, Math.max(0, progress01)) * goalTotal);
+      const col = tierColumnIndexForCompletedUnits(units, milestoneCaps);
+      const m = challenge.milestones[col];
+      if (!m) return { title: '—', subtitle: null };
+      const cap = milestoneCaps[col];
+      return {
+        title: m.label,
+        subtitle: cap != null ? `${cap} ${unitLabel}`.trim() : m.target ?? null,
+      };
+    }
+    return { title: '—', subtitle: null };
+  };
+
+  const goalProgressLine = (progress01: number): string => {
+    if (goalTotal != null && unitLabel) {
+      const u = Math.round(Math.min(1, Math.max(0, progress01)) * goalTotal);
+      return `${u} / ${goalTotal} ${unitLabel}`;
+    }
+    return (
+      formatProgressGoalQuantityLineForFraction(challenge, progress01) ?? `${Math.round(progress01 * 100)}%`
+    );
+  };
+
+  const pillMuted =
+    'border-[var(--cds-color-grey-200)] bg-[var(--cds-color-grey-25)] text-[var(--cds-color-grey-800)]';
+  const pillActive =
+    'border-[var(--cds-color-blue-500)] bg-[var(--cds-color-blue-25)] text-[var(--cds-color-grey-975)] shadow-sm ring-2 ring-[var(--cds-color-blue-400)]/35';
+
+  const renderRow = (row: SoloLeaderboardRow, key: string, borderBottom: boolean) => {
+    const { title: milestoneTitle, subtitle: milestoneSubtitle } = milestoneSummaryForProgress(row.progress01);
+    return (
+      <li
+        key={key}
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap ${
+          borderBottom ? 'border-b border-[var(--cds-color-grey-100)]' : ''
+        } ${row.isYou ? 'bg-[var(--cds-color-blue-25)]' : ''}`}
+      >
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center text-[11px] font-semibold text-[var(--cds-color-grey-500)]"
+          aria-label={`Rank ${row.rank}`}
+        >
+          {row.rank}
+        </span>
+
+        <div className="min-w-0 flex-1 basis-[min(100%,16rem)]">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={`inline-flex max-w-full items-center rounded-full border px-2 py-0.5 text-[11px] font-bold leading-tight ${row.isYou ? pillActive : pillMuted}`}
+            >
+              {row.displayLabel}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex w-[calc(50%-0.75rem)] flex-col sm:w-[9rem] sm:shrink-0">
+          <span className="text-[12px] font-semibold leading-tight text-[var(--cds-color-grey-975)]">
+            {milestoneTitle}
+          </span>
+          {milestoneSubtitle ? (
+            <span className="mt-0.5 text-[11px] leading-snug text-[var(--cds-color-grey-600)]">
+              {milestoneSubtitle}
+            </span>
+          ) : null}
+        </div>
+
+        <span className="ml-auto w-[calc(50%-0.75rem)] text-right text-[13px] font-semibold tabular-nums text-[var(--cds-color-grey-975)] sm:ml-0 sm:w-[7.25rem] sm:shrink-0">
+          {goalProgressLine(row.progress01)}
+        </span>
+      </li>
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)]">
+        <div className="px-4 py-3 sm:px-5">
+          <p className="text-sm font-semibold text-[var(--cds-color-grey-975)]">Cohort leaderboard</p>
+          <p className="mt-0.5 cds-body-tertiary text-[var(--cds-color-grey-600)]">
+            Solo rankings toward the challenge goal
+            {goalTotal != null && unitLabel ? (
+              <>
+                {' '}
+                ({goalTotal} {unitLabel})
+              </>
+            ) : null}
+            .
+            {optedIn
+              ? ' Top learners shown; your row appears below if you’re outside the top five.'
+              : ' Top learners in this cohort.'}
+          </p>
+        </div>
+
+        <div
+          className="hidden items-center gap-3 border-b border-[var(--cds-color-grey-200)] px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-[var(--cds-color-grey-800)] sm:flex"
+          aria-hidden
+        >
+          <span className="flex w-6 shrink-0 justify-center">#</span>
+          <span className="min-w-0 flex-1">Learner</span>
+          <span className="w-[9rem] shrink-0">Next milestone</span>
+          <span className="w-[7.25rem] shrink-0 text-right">Goal progress</span>
+        </div>
+
+        <ol>
+          {top.map((row, idx) =>
+            renderRow(row, `solo-${row.rank}`, idx < top.length - 1 || yours != null)
+          )}
+          {yours ? (
+            <li
+              role="presentation"
+              className="list-none border-b border-[var(--cds-color-grey-100)] bg-[var(--cds-color-grey-25)] px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]"
+            >
+              Your rank
+            </li>
+          ) : null}
+          {yours ? renderRow(yours, 'solo-you', false) : null}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Single leaderboard for active challenges: all squads ranked by overall pace toward the team goal,
  * with milestone tier and full goal progress columns (same list chrome as the prior milestone panel).
@@ -110,6 +255,12 @@ function MilestoneLeaderboard({
   const lastTarget = challenge.milestones[challenge.milestones.length - 1]?.target;
   const unitLabel = extractUnitLabel(lastTarget);
   const goalTotal = parseChallengeGoalTotalUnits(challenge);
+
+  if (isIndividualChallenge(challenge)) {
+    return (
+      <IndividualLeaderboard challenge={challenge} optedIn={optedIn} milestoneCaps={milestoneCaps} />
+    );
+  }
 
   const allGroupNumbers = Array.from({ length: challenge.groupCount }, (_, i) => i + 1);
   const sortedGroups = [...allGroupNumbers].sort(
@@ -302,7 +453,11 @@ function UnjoinedGoalPreview({
           </div>
           <div className="px-4 py-3">
             <p className="cds-body-tertiary text-[var(--cds-color-grey-600)]">
-              {isCohortCollectiveChallenge(challenge) ? 'Shared cohort goal' : 'Team goal'}
+              {isCohortCollectiveChallenge(challenge)
+                ? 'Shared cohort goal'
+                : isIndividualChallenge(challenge)
+                  ? 'Challenge goal'
+                  : 'Team goal'}
             </p>
             <p className="mt-0.5 text-[18px] font-bold tabular-nums leading-tight text-[var(--cds-color-grey-975)]">
               {goalTotal}
@@ -378,6 +533,7 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   const milestoneCaps = parseMilestoneNumericCaps(challenge);
   const learnerGroupSquad = groupSquadForChallenge(challenge, challenge.groupIndex);
   const collectiveChallenge = isCohortCollectiveChallenge(challenge);
+  const individualChallenge = isIndividualChallenge(challenge);
   const joinChallenge = onRequestJoinChallenge ?? onToggleOptIn;
   const cohortMeta = FEED_COHORT_META[challenge.cohortId];
   const showJoinCta = (isActive && !optedIn) || (isUpcoming && !optedIn);
@@ -517,7 +673,9 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
                     {challenge.completedHeroSubline ??
                       (collectiveChallenge
                         ? 'Great job contributing to the cohort goal!'
-                        : `Great job ${learnerGroupSquad.label}!`)}
+                        : individualChallenge
+                          ? 'Great job on the cohort leaderboard!'
+                          : `Great job ${learnerGroupSquad.label}!`)}
                   </p>
                 </div>
                 {challenge.outcome && (

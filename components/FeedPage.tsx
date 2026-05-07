@@ -116,7 +116,7 @@ export const FeedPage: React.FC<FeedPageProps> = ({
   return (
     <CommunityCohortMembershipProvider>
       <div
-        className={`flex-1 bg-[var(--cds-color-white)] custom-scrollbar ${
+        className={`flex min-h-0 flex-1 flex-col bg-[var(--cds-color-white)] custom-scrollbar ${
           communityScrollLocked ? 'overflow-y-hidden' : 'overflow-y-auto'
         }`}
       >

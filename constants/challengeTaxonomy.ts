@@ -9,6 +9,13 @@ export function isCohortCollectiveChallenge(c: {
   return c.participationMode === 'cohort_collective';
 }
 
+/** Solo vs cohort leaderboard — not squad-assigned; UI must not use `groupCount` as team count. */
+export function isIndividualChallenge(c: {
+  participationMode: ChallengeParticipationMode;
+}): boolean {
+  return c.participationMode === 'individual';
+}
+
 /** Time on task, streak/consistency, or learning items / modules completed */
 export type ChallengeMetric = 'quantity' | 'time' | 'consistency';
 
