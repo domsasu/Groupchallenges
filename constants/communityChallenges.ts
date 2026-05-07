@@ -77,6 +77,8 @@ export interface CommunityChallenge {
     completedCourseCount?: number;
   };
   members?: ChallengeMember[];
+  /** Optional total learners for Browse row “N joined”; if omitted, a stable display value is derived. */
+  participantCount?: number;
   /** Tier shown on challenge strip card illustration and footer (independent of milestone naming). */
   visualTier: ChallengeVisualTier;
   /** Progress toward current challenge goal, 0–1 (drives progress bar on strip card). */
@@ -462,6 +464,23 @@ function parseChallengeLocalDate(isoDate: string): Date {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
   if (!m) return new Date(isoDate);
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+/** Browse row social proof under Join (Coursera-style “830 joined”). */
+export function formatChallengeParticipantJoinedLine(challenge: CommunityChallenge): string {
+  const n =
+    challenge.participantCount ?? stablePseudoParticipantCountForJoinedLine(challenge);
+  return `${n.toLocaleString()} joined`;
+}
+
+function stablePseudoParticipantCountForJoinedLine(challenge: CommunityChallenge): number {
+  let h = 2166136261;
+  for (let i = 0; i < challenge.id.length; i++) {
+    h ^= challenge.id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const abs = Math.abs(h);
+  return 320 + (abs % 9200) + Math.min(600, challenge.approxGroupSize * 4);
 }
 
 /**

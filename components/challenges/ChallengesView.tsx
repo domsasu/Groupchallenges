@@ -32,6 +32,35 @@ import { ChallengeRecommendedStrip } from './ChallengeRecommendedStrip';
 
 type ChallengeSelection = { kind: 'challenge'; id: string } | null;
 
+/** Anchor targets for section jumpers (also used by scroll spy). */
+export const CHALLENGE_SECTION_IDS: Record<ChallengesStatusTab, string> = {
+  browse: 'challenge-section-browse',
+  active: 'challenge-section-active',
+  completed: 'challenge-section-completed',
+};
+
+const SECTION_ORDER: ChallengesStatusTab[] = ['browse', 'active', 'completed'];
+
+function getScrollParent(el: HTMLElement | null): Element | null {
+  if (!el) return null;
+  let parent: HTMLElement | null = el.parentElement;
+  while (parent) {
+    const { overflowY } = window.getComputedStyle(parent);
+    if ((overflowY === 'auto' || overflowY === 'scroll') && parent.scrollHeight > parent.clientHeight) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
+function scrollToChallengeSection(tab: ChallengesStatusTab) {
+  const el = document.getElementById(CHALLENGE_SECTION_IDS[tab]);
+  if (!el) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' });
+}
+
 function buildInitialChallengeSelection(
   joinedCohortIds: FeedCohortId[],
   initialOpenChallengeId: string | undefined,
@@ -68,7 +97,7 @@ export interface ChallengesViewProps {
   onScrollLockChange?: (locked: boolean) => void;
   /** Deep link: open full-screen challenge detail on load (e.g. Home sidebar carousel). */
   initialOpenChallengeId?: string;
-  /** Initial Browse / Active / Completed tab (parent may pass `active` when deep-linking). */
+  /** Initial Browse / Active / Completed section to scroll into view when landing on Challenges. */
   initialChallengesStatusTab?: ChallengesStatusTab;
 }
 
@@ -89,10 +118,6 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     persistChallengesFromMock(challenges);
   }, [challenges]);
 
-  const [statusTab, setStatusTab] = useState<ChallengesStatusTab>(() =>
-    initialChallengesStatusTab ?? (initialOpenChallengeId ? 'active' : 'browse')
-  );
-
   const [filters, setFilters] = useState<ChallengeDiscoveryFilters>(() => ({
     ...DEFAULT_CHALLENGE_DISCOVERY_FILTERS,
   }));
@@ -103,21 +128,44 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
 
   const [detailModalOpen, setDetailModalOpen] = useState(() => Boolean(initialOpenChallengeId));
 
-  /** Skip the first tab/filter sync that would close the deep-linked detail modal. */
-  const skipNextTabSyncCloseRef = useRef(Boolean(initialOpenChallengeId));
+  /** Skip the first filter sync that would close the deep-linked detail modal. */
+  const skipNextFilterSyncCloseRef = useRef(Boolean(initialOpenChallengeId));
 
-  const baseForTab = useMemo(
-    () => challengesMatchingStatusTab(challenges, statusTab),
-    [challenges, statusTab]
+  const [activeSection, setActiveSection] = useState<ChallengesStatusTab>('browse');
+
+  const discoveryRootRef = useRef<HTMLDivElement>(null);
+
+  const browseBase = useMemo(
+    () => challengesMatchingStatusTab(challenges, 'browse'),
+    [challenges]
   );
 
-  const filteredSorted = useMemo(() => {
-    const filtered = filterChallengesByDiscovery(baseForTab, filters, joinedCohortIds);
-    return sortDiscoveryChallenges(filtered, statusTab, joinedCohortIds);
-  }, [baseForTab, filters, joinedCohortIds, statusTab]);
+  const browseList = useMemo(() => {
+    const filtered = filterChallengesByDiscovery(browseBase, filters, joinedCohortIds);
+    return sortDiscoveryChallenges(filtered, 'browse', joinedCohortIds);
+  }, [browseBase, filters, joinedCohortIds]);
+
+  const activeBase = useMemo(
+    () => challengesMatchingStatusTab(challenges, 'active'),
+    [challenges]
+  );
+
+  const activeList = useMemo(
+    () => sortDiscoveryChallenges(activeBase, 'active', joinedCohortIds),
+    [activeBase, joinedCohortIds]
+  );
+
+  const completedBase = useMemo(
+    () => challengesMatchingStatusTab(challenges, 'completed'),
+    [challenges]
+  );
+
+  const completedList = useMemo(
+    () => sortDiscoveryChallenges(completedBase, 'completed', joinedCohortIds),
+    [completedBase, joinedCohortIds]
+  );
 
   const recommendedActive = useMemo(() => {
-    if (statusTab !== 'browse') return [];
     const limit = 3;
     const activeTop = popularOngoingChallenges(challenges, limit);
     if (activeTop.length >= limit) return activeTop;
@@ -129,7 +177,7 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     );
     const sortedRest = sortDiscoveryChallenges(browsePool, 'browse', joinedCohortIds);
     return [...activeTop, ...sortedRest].slice(0, limit);
-  }, [challenges, statusTab, joinedCohortIds]);
+  }, [challenges, joinedCohortIds]);
 
   const activeFilterCount = useMemo(() => {
     let n = 0;
@@ -141,36 +189,87 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     return n;
   }, [filters]);
 
-  const hasChallengeList = filteredSorted.length > 0;
-
   const challengeForDetail = useMemo(() => {
     if (!selection || selection.kind !== 'challenge') return null;
     return challenges.find((c) => c.id === selection.id) ?? null;
   }, [selection, challenges]);
 
-  /** When tab or filters change, keep selection if possible; else first challenge. Close detail modal (except first sync after deep link). */
+  const onJump = useCallback((tab: ChallengesStatusTab) => {
+    scrollToChallengeSection(tab);
+  }, []);
+
+  /** Scroll spy: highlight the jumper for the section most visible within the Feed scroll container. */
+  useEffect(() => {
+    const rootEl = discoveryRootRef.current;
+    const scrollRoot = getScrollParent(rootEl);
+    const elements = SECTION_ORDER.map((tab) => document.getElementById(CHALLENGE_SECTION_IDS[tab])).filter(
+      (el): el is HTMLElement => el != null
+    );
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersecting = entries.filter((e) => e.isIntersecting);
+        if (intersecting.length === 0) return;
+        const best = intersecting.reduce((a, b) =>
+          a.intersectionRatio >= b.intersectionRatio ? a : b
+        );
+        const id = best.target.id;
+        const tab = SECTION_ORDER.find((t) => CHALLENGE_SECTION_IDS[t] === id);
+        if (tab) setActiveSection(tab);
+      },
+      {
+        root: scrollRoot instanceof HTMLElement ? scrollRoot : null,
+        rootMargin: '-96px 0px -45% 0px',
+        threshold: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 0.75, 1],
+      }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [browseList.length, activeList.length, completedList.length]);
+
+  const initialLandingSectionRef = useRef(
+    initialChallengesStatusTab ?? (initialOpenChallengeId ? 'active' : 'browse')
+  );
+
+  /** Deep-link: scroll to the requested section once on mount. */
+  useEffect(() => {
+    const id = CHALLENGE_SECTION_IDS[initialLandingSectionRef.current];
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      });
+    });
+  }, []);
+
+  /** When filters or lists change, keep selection if it still appears in any section; else pick a fallback. Close detail modal except first sync after deep link. */
   useEffect(() => {
     const syncSelection = () => {
       setSelection((prev) => {
-        if (prev?.kind === 'challenge' && filteredSorted.some((c) => c.id === prev.id)) {
-          return prev;
-        }
-        if (filteredSorted.length > 0) {
-          return { kind: 'challenge', id: filteredSorted[0]!.id };
-        }
+        if (!prev || prev.kind !== 'challenge') return prev;
+        const id = prev.id;
+        const inAny =
+          browseList.some((c) => c.id === id) ||
+          activeList.some((c) => c.id === id) ||
+          completedList.some((c) => c.id === id);
+        if (inAny) return prev;
+        if (browseList.length > 0) return { kind: 'challenge', id: browseList[0]!.id };
+        if (activeList.length > 0) return { kind: 'challenge', id: activeList[0]!.id };
+        if (completedList.length > 0) return { kind: 'challenge', id: completedList[0]!.id };
         return null;
       });
     };
 
-    if (skipNextTabSyncCloseRef.current) {
-      skipNextTabSyncCloseRef.current = false;
+    if (skipNextFilterSyncCloseRef.current) {
+      skipNextFilterSyncCloseRef.current = false;
       syncSelection();
       return;
     }
 
     setDetailModalOpen(false);
     syncSelection();
-  }, [statusTab, filters, filteredSorted]);
+  }, [filters, browseList, activeList, completedList]);
 
   const toggleOptedIn = useCallback((id: string) => {
     setChallenges((prev) => {
@@ -222,10 +321,14 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
         })
       );
       setJoinFlowChallengeId(null);
-      if (lifecycle === 'active') {
-        setStatusTab('active');
-      }
       setSelection({ kind: 'challenge', id });
+      if (lifecycle === 'active') {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            scrollToChallengeSection('active');
+          });
+        });
+      }
     },
     []
   );
@@ -264,24 +367,45 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
     onScrollLockChange?.(scrollLockedBehindOverlay);
   }, [scrollLockedBehindOverlay, onScrollLockChange]);
 
+  const renderChallengeGrid = (list: CommunityChallenge[]) => (
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {list.length === 0 ? (
+        <p className="col-span-full cds-body-secondary text-[var(--cds-color-grey-600)]">
+          No challenges in this category.
+        </p>
+      ) : (
+        list.map((c) => (
+          <ChallengeBrowseRowCard
+            key={c.id}
+            challenge={c}
+            onOpenDetail={() => openChallengeModal(c.id)}
+            onJoin={() => handleRequestJoinChallenge(c.id, c.cohortId)}
+          />
+        ))
+      )}
+    </div>
+  );
+
   return (
     <>
-      {/* Single page scroll lives on the Feed shell — avoid a nested overflow-y here (duplicate scrollbars). */}
-      {/* Avoid overflow-x-hidden here — it clips absolutely positioned filter flyouts that extend past the column edge. */}
-      <div className="flex w-full flex-col gap-0 overflow-x-visible">
+      <div ref={discoveryRootRef} className="flex w-full flex-col gap-0 overflow-x-visible">
         <header className="sticky top-0 z-30 bg-[var(--cds-color-white)] pb-3 shadow-[0_1px_0_rgba(15,23,42,0.06)] supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:bg-[var(--cds-color-white)]/92">
           <ChallengeDiscoveryFilterBar
             showFilters={false}
-            statusTab={statusTab}
-            onStatusTabChange={setStatusTab}
+            activeSection={activeSection}
+            onJump={onJump}
             filters={filters}
             onFiltersChange={setFilters}
             activeFilterCount={activeFilterCount}
           />
         </header>
 
-        <section className="px-1 pb-4 pt-2" aria-label="Challenge discovery">
-          {statusTab === 'browse' ? (
+        <div className="px-1 pb-4 pt-2">
+          <section
+            id={CHALLENGE_SECTION_IDS.browse}
+            aria-labelledby="challenge-heading-browse"
+            className="scroll-mt-24 md:scroll-mt-28"
+          >
             <div className="mb-[24pt]">
               <ChallengeRecommendedStrip
                 challenges={recommendedActive}
@@ -289,35 +413,53 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({
                 onJoin={(c) => handleRequestJoinChallenge(c.id, c.cohortId)}
               />
             </div>
-          ) : null}
-          <ChallengeDiscoveryFiltersSection
-            statusTab={statusTab}
-            filters={filters}
-            onFiltersChange={setFilters}
-            activeFilterCount={activeFilterCount}
-          />
-          {statusTab === 'browse' ? (
+            <ChallengeDiscoveryFiltersSection
+              leadingTitle={
+                <h2
+                  id="challenge-heading-browse"
+                  className="text-xl font-semibold tracking-tight text-[var(--cds-color-grey-975)] md:text-2xl"
+                >
+                  Browse
+                </h2>
+              }
+              filters={filters}
+              onFiltersChange={setFilters}
+              activeFilterCount={activeFilterCount}
+            />
             <p className="mb-3 px-0.5 text-xs font-semibold uppercase tracking-wide text-[var(--cds-color-grey-500)]">
               Recommended for you
             </p>
-          ) : null}
-          <div role="tabpanel" aria-labelledby={`challenge-status-${statusTab}`} className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {!hasChallengeList ? (
-              <p className="col-span-full cds-body-secondary text-[var(--cds-color-grey-600)]">
-                No challenges in this category.
-              </p>
-            ) : (
-              filteredSorted.map((c) => (
-                <ChallengeBrowseRowCard
-                  key={c.id}
-                  challenge={c}
-                  onOpenDetail={() => openChallengeModal(c.id)}
-                  onJoin={() => handleRequestJoinChallenge(c.id, c.cohortId)}
-                />
-              ))
-            )}
-          </div>
-        </section>
+            {renderChallengeGrid(browseList)}
+          </section>
+
+          <section
+            id={CHALLENGE_SECTION_IDS.active}
+            aria-labelledby="challenge-heading-active"
+            className="scroll-mt-24 border-t border-[var(--cds-color-grey-100)] pt-10 md:scroll-mt-28 md:pt-12"
+          >
+            <h2
+              id="challenge-heading-active"
+              className="mb-4 px-0.5 text-xl font-semibold tracking-tight text-[var(--cds-color-grey-975)] md:text-2xl"
+            >
+              Active
+            </h2>
+            {renderChallengeGrid(activeList)}
+          </section>
+
+          <section
+            id={CHALLENGE_SECTION_IDS.completed}
+            aria-labelledby="challenge-heading-completed"
+            className="scroll-mt-24 border-t border-[var(--cds-color-grey-100)] pt-10 md:scroll-mt-28 md:pt-12"
+          >
+            <h2
+              id="challenge-heading-completed"
+              className="mb-4 px-0.5 text-xl font-semibold tracking-tight text-[var(--cds-color-grey-975)] md:text-2xl"
+            >
+              Completed
+            </h2>
+            {renderChallengeGrid(completedList)}
+          </section>
+        </div>
       </div>
 
       {detailModalOpen && selection?.kind === 'challenge' && challengeForDetail && (

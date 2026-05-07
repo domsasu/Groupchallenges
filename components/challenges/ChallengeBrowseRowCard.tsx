@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   formatChallengeCardHeroLabel,
+  formatChallengeParticipantJoinedLine,
   formatProgressGoalQuantityLineForFraction,
   type CommunityChallenge,
 } from '../../constants/communityChallenges';
@@ -68,9 +69,10 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
     progressLine;
   const oneLiner = useMemo(() => challengeWhyJoinOneLiner(challenge.whyJoin), [challenge.whyJoin]);
   const { mode, label } = joinCtaForChallenge(challenge);
+  const joinedSocialProofLine = mode === 'join' ? formatChallengeParticipantJoinedLine(challenge) : null;
 
   return (
-    <div className="flex w-full items-stretch gap-3 rounded-xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] p-3 text-left shadow-sm transition hover:border-[var(--cds-color-grey-300)] sm:gap-4 sm:p-4">
+    <div className="flex w-full items-stretch gap-3 rounded-xl border border-[var(--cds-color-grey-200)] bg-[var(--cds-color-white)] p-3 text-left shadow-sm transition-[border-color,box-shadow] hover:border-[var(--cds-color-grey-300)] hover:shadow-md sm:gap-4 sm:p-4">
       <button
         type="button"
         onClick={onOpenDetail}
@@ -89,11 +91,11 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
           />
         </div>
         <div className="min-w-0 flex-1 py-0.5">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-sky-950">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cds-color-blue-700)]">
               {formatChallengeCardHeroLabel(challenge)}
             </span>
-            <span className="text-[10px] font-semibold text-[var(--cds-color-grey-900)]">{cohortMeta.pillLabel}</span>
+            <span className="text-[11px] font-medium text-[var(--cds-color-grey-600)]">{cohortMeta.pillLabel}</span>
           </div>
           <p className="mt-1.5 text-sm font-semibold leading-snug text-[var(--cds-color-grey-975)] sm:text-base">
             {challenge.name}
@@ -128,18 +130,29 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
           ) : null}
         </div>
       </button>
-      <div className="flex min-w-max shrink-0 flex-col justify-center self-stretch whitespace-nowrap border-l border-[var(--cds-color-grey-100)] pl-3 sm:pl-4">
+      <div
+        className={`flex shrink-0 flex-col justify-start self-start ${
+          mode === 'joined' || mode === 'view' ? 'min-w-[7.25rem] max-w-[10rem]' : 'w-[5.75rem] sm:w-[6.5rem]'
+        }`}
+      >
         {mode === 'join' ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onJoin();
-            }}
-            className="shrink-0 whitespace-nowrap rounded-[var(--cds-border-radius-100)] bg-[var(--cds-color-blue-700)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
-          >
-            {label}
-          </button>
+          <div className="flex flex-col items-stretch gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onJoin();
+              }}
+              className="w-full rounded-lg bg-[var(--cds-color-blue-700)] px-3 py-2 text-center text-sm font-semibold text-white shadow-[inset_0_0_0_1px_var(--cds-color-blue-700)] transition hover:bg-[var(--cds-color-blue-800)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+            >
+              {label}
+            </button>
+            {joinedSocialProofLine ? (
+              <p className="text-center text-[11px] leading-tight text-[var(--cds-color-grey-600)]">
+                {joinedSocialProofLine}
+              </p>
+            ) : null}
+          </div>
         ) : mode === 'joined' ? (
           <button
             type="button"
@@ -147,7 +160,7 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
               e.stopPropagation();
               onOpenDetail();
             }}
-            className="shrink-0 whitespace-nowrap rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-300)] bg-transparent px-4 py-2.5 text-sm font-semibold text-[var(--cds-color-grey-800)] shadow-none transition hover:border-[var(--cds-color-grey-400)] hover:bg-[var(--cds-color-grey-25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+            className="w-full rounded-lg bg-[var(--cds-color-white)] px-3 py-2 text-center text-sm font-semibold text-[var(--cds-color-grey-975)] shadow-[inset_0_0_0_1px_var(--cds-color-grey-300)] transition hover:bg-[var(--cds-color-grey-25)] hover:shadow-[inset_0_0_0_1px_var(--cds-color-grey-400)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
           >
             {label}
           </button>
@@ -158,7 +171,7 @@ export const ChallengeBrowseRowCard: React.FC<ChallengeBrowseRowCardProps> = ({
               e.stopPropagation();
               onOpenDetail();
             }}
-            className="shrink-0 whitespace-nowrap rounded-[var(--cds-border-radius-100)] border border-[var(--cds-color-grey-300)] bg-[var(--cds-color-white)] px-4 py-2.5 text-sm font-semibold text-[var(--cds-color-grey-800)] shadow-sm transition hover:border-[var(--cds-color-grey-400)] hover:bg-[var(--cds-color-grey-25)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
+            className="w-full rounded-lg bg-[var(--cds-color-white)] px-3 py-2 text-center text-sm font-semibold text-[var(--cds-color-grey-975)] shadow-[inset_0_0_0_1px_var(--cds-color-grey-300)] transition hover:bg-[var(--cds-color-grey-25)] hover:shadow-[inset_0_0_0_1px_var(--cds-color-grey-400)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--cds-color-blue-700)]"
           >
             {label}
           </button>

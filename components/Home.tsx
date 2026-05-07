@@ -490,7 +490,7 @@ function HomeChallengeCarousel({
   if (!challenge) return null;
 
   return (
-    <div className="mt-3 border-t border-[var(--cds-color-grey-100)] pt-3">
+    <div>
       {onNavigateToFeed ? (
         <button
           type="button"
@@ -618,9 +618,6 @@ function HomeLeaderboard({
 /** When true, shows the cohort’s active/upcoming challenge (e.g. Working Parents) under Weekly streaks. */
 const SHOW_HOME_COHORT_SIDEBAR_CHALLENGE = false;
 
-/** Hide Working Parents “nap time” cohort card under streaks; show joined challenges via `joinedActiveHomeSidebarChallenges` instead. */
-const HOME_SIDEBAR_EXCLUDED_CHALLENGE_ID = 'ch-active-workingparents-nap-module';
-
 export const Home: React.FC<HomeProps> = ({ 
     onResume, 
     currentSP, 
@@ -652,7 +649,7 @@ export const Home: React.FC<HomeProps> = ({
   const sidebarHomeChallenge =
     cohortList.find((c) => c.lifecycle === 'active') ?? cohortList.find((c) => c.lifecycle === 'upcoming') ?? null;
 
-  /** Mini challenge cards under streaks: any active challenge the learner joined (Community tab state), except the Working Parents nap-module card. */
+  /** Sidebar widget: active joined challenges (Community tab / localStorage enrollment). */
   const joinedActiveHomeSidebarChallenges = mergedCommunityChallenges.filter(
     (c) => c.optedIn && c.lifecycle === 'active'
   );
@@ -1109,13 +1106,17 @@ export const Home: React.FC<HomeProps> = ({
                     )}
                   </div>
                 )}
-                {joinedActiveHomeSidebarChallenges.length > 0 && (
+              </div>
+
+              {joinedActiveHomeSidebarChallenges.length > 0 ? (
+                <div className="bg-[var(--cds-color-white)] rounded-[var(--cds-border-radius-200)] p-4">
+                  <h3 className="cds-subtitle-sm mb-3 text-[var(--cds-color-grey-975)]">Active challenges</h3>
                   <HomeChallengeCarousel
                     challenges={joinedActiveHomeSidebarChallenges}
                     onNavigateToFeed={onNavigateToFeed}
                   />
-                )}
-              </div>
+                </div>
+              ) : null}
 
             </div>
 
