@@ -106,7 +106,6 @@ export const ChallengeDetailModal: React.FC<ChallengeDetailModalProps> = ({
             onResumeLearning={onResumeLearning}
             onShareChallenge={onShareChallenge}
             onOpenShareout={onOpenShareout}
-            onBack={onClose}
           />
         </ChallengeDetailErrorBoundary>
       </div>

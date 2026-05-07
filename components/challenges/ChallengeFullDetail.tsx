@@ -508,9 +508,6 @@ export interface ChallengeFullDetailProps {
   onOpenShareout?: () => void;
   onResumeLearning?: () => void;
   learnerFirstName?: string;
-  /** Secondary control shown on the hero (e.g. dismiss full-screen detail). */
-  onBack?: () => void;
-  backLabel?: string;
 }
 
 export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
@@ -523,8 +520,6 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
   onOpenShareout,
   onResumeLearning,
   learnerFirstName = 'Priya',
-  onBack,
-  backLabel = 'Back',
 }) => {
   const isCompleted = challenge.lifecycle === 'completed';
   const isUpcoming = challenge.lifecycle === 'upcoming';
@@ -565,20 +560,6 @@ export const ChallengeFullDetail: React.FC<ChallengeFullDetailProps> = ({
           loading="lazy"
           decoding="async"
         />
-        {onBack ? (
-          <div className="pointer-events-auto absolute left-3 top-3 z-20 sm:left-4 sm:top-4">
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/55 bg-black/30 px-3 py-2 text-sm font-semibold text-white shadow-md backdrop-blur-md transition hover:bg-black/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              <span className="material-symbols-rounded text-[20px] leading-none" aria-hidden>
-                arrow_back
-              </span>
-              {backLabel}
-            </button>
-          </div>
-        ) : null}
         <div
           className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.45)_38%,rgba(0,0,0,0.1)_68%,transparent_100%)]"
           aria-hidden
